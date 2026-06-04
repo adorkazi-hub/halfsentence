@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Admin · halfsentence</title>
+  <link rel="stylesheet" href="../css/admin.css"/>
+</head>
+<body>
+<div class="admin-layout">
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-logo" onclick="window.location.href='../index.html'">halfsentence<span class="sb-logo-dot"></span></div>
+    <span class="sb-admin-badge">Admin Panel</span>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-group">Overview</div>
+    <button class="sb-item active" onclick="navTo('dashboard',this)"><span class="sb-icon">📊</span> Dashboard</button>
+
+    <div class="sb-group">Content</div>
+    <button class="sb-item" onclick="navTo('posts',this);loadPosts()"><span class="sb-icon">📝</span> All Posts <span class="sb-badge-count" id="nav-post-count">—</span></button>
+    <button class="sb-item" onclick="navTo('editor',this);newPost()"><span class="sb-icon">✏️</span> New Post</button>
+    <button class="sb-item" onclick="navTo('drafts',this);loadDraftsList()"><span class="sb-icon">📋</span> Drafts <span class="sb-badge-count" id="nav-draft-count">—</span></button>
+    <button class="sb-item" onclick="navTo('scheduled',this);loadScheduledList()"><span class="sb-icon">🗓</span> Scheduled <span class="sb-badge-count" id="nav-sched-count">—</span></button>
+    <button class="sb-item" onclick="navTo('media',this);loadMedia()"><span class="sb-icon">🖼</span> Media</button>
+
+    <div class="sb-group">Community</div>
+    <button class="sb-item" onclick="navTo('comments',this);loadComments()"><span class="sb-icon">💬</span> Comments <span class="sb-badge-count sb-badge-warn" id="nav-comm-count">—</span></button>
+    <button class="sb-item" onclick="navTo('readers',this);loadReadersAdmin()"><span class="sb-icon">📚</span> Readers' Corner</button>
+
+    <div class="sb-group">Site</div>
+    <button class="sb-item" onclick="navTo('settings',this)"><span class="sb-icon">⚙️</span> Settings</button>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar">h</div>
+      <div><div class="sb-user-name">halfsentence</div><div class="sb-user-role">Admin</div></div>
+    </div>
+    <button class="sb-view-site" onclick="window.open('../index.html','_blank')">↗ View site</button>
+    <button class="sb-view-site" onclick="logout()" style="color:var(--rose);margin-top:4px">Sign out</button>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="admin-main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <button class="topbar-btn tb-ghost" onclick="navTo('posts',null);loadPosts()">All Posts</button>
+    <button class="topbar-btn tb-primary" onclick="navTo('editor',null);newPost()">+ New Post</button>
+  </div>
+
+  <div class="admin-content">
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Views</div><div class="stat-value" id="stat-views">—</div><div class="stat-delta stat-up" id="stat-views-d"></div></div>
+      <div class="stat-card"><div class="stat-label">Likes</div><div class="stat-value" id="stat-likes">—</div><div class="stat-delta stat-up"></div></div>
+      <div class="stat-card"><div class="stat-label">Comments</div><div class="stat-value" id="stat-comments">—</div><div class="stat-delta stat-up"></div></div>
+      <div class="stat-card"><div class="stat-label">Posts</div><div class="stat-value" id="stat-posts">—</div><div class="stat-delta stat-up"></div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Weekly Traffic</div>
+          <select style="font-size:11px;border:1px solid var(--border);border-radius:99px;padding:3px 10px;background:var(--white);color:var(--ink-m);outline:none;">
+            <option>Last 7 days</option><option>Last 30 days</option>
+          </select>
+        </div>
+        <div class="card-body">
+          <div class="bar-chart" id="traffic-chart"></div>
+          <div style="font-size:11px;color:var(--ink-l);text-align:center">Unique visitors / day</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Post Reactions</div></div>
+        <div class="card-body">
+          <div class="donut-wrap">
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="32" fill="none" stroke="#E4E7E0" stroke-width="14"/>
+              <circle cx="45" cy="45" r="32" fill="none" stroke="#5E7856" stroke-width="14" stroke-dasharray="148 53" stroke-dashoffset="25" stroke-linecap="round"/>
+              <circle cx="45" cy="45" r="32" fill="none" stroke="#B85C4A" stroke-width="14" stroke-dasharray="28 173" stroke-dashoffset="-123" stroke-linecap="round"/>
+              <circle cx="45" cy="45" r="32" fill="none" stroke="#C4891E" stroke-width="14" stroke-dasharray="24 177" stroke-dashoffset="-151" stroke-linecap="round"/>
+              <text x="45" y="49" text-anchor="middle" font-family="'Lora',serif" font-size="12" font-weight="700" fill="#1B1D19">👍</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="dl-item"><div class="dl-dot" style="background:var(--sage)"></div>👍 Likes <span class="dl-val" id="donut-likes">—</span></div>
+              <div class="dl-item"><div class="dl-dot" style="background:var(--rose)"></div>👎 Dislikes <span class="dl-val" id="donut-hates">—</span></div>
+              <div class="dl-item"><div class="dl-dot" style="background:var(--amber)"></div>💬 Comments <span class="dl-val" id="donut-comments">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">Top Posts by Views</div>
+          <button class="card-link" onclick="navTo('posts',null);loadPosts()">See all →</button>
+        </div>
+        <div class="card-body" style="padding:12px 18px">
+          <table class="top-table">
+            <thead><tr><th>Post</th><th>Views</th></tr></thead>
+            <tbody id="top-posts-body"><tr><td colspan="2" style="color:var(--ink-l);font-size:13px;padding:12px 0">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div class="card-title">Recent Activity</div></div>
+        <div class="card-body" style="padding:4px 18px 8px">
+          <div class="activity-list" id="activity-list">
+            <div style="color:var(--ink-l);font-size:13px;padding:16px 0">Loading activity…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:4px">
+      <div class="card-head"><div class="card-title">Traffic Sources</div></div>
+      <div class="card-body">
+        <div class="source-grid">
+          <div class="source-item"><div class="source-val" style="color:var(--ink)">48%</div><div class="source-name">Direct</div></div>
+          <div class="source-item"><div class="source-val" style="color:var(--sage)">27%</div><div class="source-name">Search</div></div>
+          <div class="source-item"><div class="source-val" style="color:var(--blue)">16%</div><div class="source-name">Social</div></div>
+          <div class="source-item"><div class="source-val" style="color:var(--amber)">9%</div><div class="source-name">Referral</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ALL POSTS ═══ -->
+  <div class="panel" id="panel-posts">
+    <div class="toolbar-row">
+      <div class="search-box">
+        <span style="color:var(--ink-l)">🔍</span>
+        <input placeholder="Search posts…" id="posts-search" oninput="loadPosts({search:this.value,status:document.getElementById('posts-status-filter').value})"/>
+      </div>
+      <select class="filter-sel" id="posts-status-filter" onchange="loadPosts({status:this.value,search:document.getElementById('posts-search').value})">
+        <option value="">All status</option>
+        <option value="published">Published</option>
+        <option value="draft">Draft</option>
+        <option value="scheduled">Scheduled</option>
+      </select>
+      <select class="filter-sel">
+        <option value="">All categories</option>
+        <option>Philosophy</option><option>Culture</option>
+        <option>Books</option><option>Personal</option><option>Technology</option>
+      </select>
+      <div class="count-label" id="post-count">— posts</div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden">
+      <table class="data-table" style="width:100%">
+        <thead><tr>
+          <th style="padding:12px 0">Post</th>
+          <th>Category</th><th>Status</th><th>Views</th><th>Reactions</th><th>Date</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="posts-tbody"><tr><td colspan="7" style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ EDITOR ═══ -->
+  <div class="panel" id="panel-editor">
+    <div class="editor-layout">
+
+      <!-- Left: editor -->
+      <div>
+        <div class="meta-field" style="margin-bottom:10px">
+          <input class="meta-in title-in" id="ed-title" placeholder="Post title…" oninput="autoSlug()"/>
+        </div>
+        <div class="rtb">
+          <select class="rtb-sel" onchange="rfmt('formatBlock',this.value);this.value='p'">
+            <option value="p">Paragraph</option>
+            <option value="h2">Heading</option>
+            <option value="blockquote">Quote</option>
+          </select>
+          <div class="rtb-sep"></div>
+          <button class="rtb-btn" onclick="rfmt('bold')"><strong>B</strong></button>
+          <button class="rtb-btn" onclick="rfmt('italic')"><em>I</em></button>
+          <button class="rtb-btn" onclick="rfmt('underline')" style="text-decoration:underline">U</button>
+          <button class="rtb-btn" onclick="rfmt('strikeThrough')"><s>S</s></button>
+          <div class="rtb-sep"></div>
+          <button class="rtb-btn" onclick="rfmt('insertUnorderedList')">•≡</button>
+          <button class="rtb-btn" onclick="rfmt('insertOrderedList')">1.</button>
+          <div class="rtb-sep"></div>
+          <button class="rtb-btn" onclick="rfmt('justifyLeft')">⇤</button>
+          <button class="rtb-btn" onclick="rfmt('justifyCenter')">⊟</button>
+          <button class="rtb-btn" onclick="rfmt('justifyRight')">⇥</button>
+          <div class="rtb-sep"></div>
+          <button class="rtb-btn" onclick="rLink()">🔗</button>
+          <button class="rtb-btn" onclick="rfmt('removeFormat')" style="font-size:10px">✕fmt</button>
+          <div class="rtb-sep"></div>
+          <button class="rtb-btn" onclick="document.execCommand('undo')">↩</button>
+          <button class="rtb-btn" onclick="document.execCommand('redo')">↪</button>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+            <span style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-l)">Import</span>
+            <button class="rtb-btn" style="width:auto;padding:0 8px;font-size:11px;background:var(--mist);border-radius:5px" onclick="document.getElementById('import-inp').click()">📄 File</button>
+            <input type="file" id="import-inp" accept=".txt,.md,.docx" style="display:none" onchange="importFile(event.target.files[0])"/>
+          </div>
+        </div>
+        <div class="rte" id="rte" contenteditable="true" oninput="updateWordCount()"></div>
+        <div class="rte-foot">
+          <span id="rte-wc">0 words · 1 min read</span>
+          <span id="rte-save" style="color:var(--sage-l)">● Draft auto-saved</span>
+        </div>
+      </div>
+
+      <!-- Right: sidebar -->
+      <div>
+
+        <!-- Publish -->
+        <div class="aside-card">
+          <div class="ac-head">🚀 Publish</div>
+          <div class="ac-body">
+            <div class="pub-actions">
+              <button class="pub-btn pb-pub" onclick="savePost('published')">Publish Now</button>
+              <button class="pub-btn pb-sched" onclick="toggleSchedule()">🗓 Schedule</button>
+              <button class="pub-btn pb-draft" onclick="savePost('draft')">Save as Draft</button>
+            </div>
+            <div class="sched-picker" id="sched-picker">
+              <label class="meta-label" style="display:block;margin-bottom:4px">Publish date</label>
+              <input type="date" class="sched-in" id="sched-date"/>
+              <input type="time" class="sched-in" id="sched-time" value="09:00"/>
+              <button class="pub-btn pb-sched" onclick="savePost('scheduled')">Confirm Schedule</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cover image -->
+        <div class="aside-card">
+          <div class="ac-head">🖼 Cover Image</div>
+          <div class="ac-body">
+            <div class="cover-zone" id="cover-zone"
+                 onclick="document.getElementById('cover-inp').click()"
+                 ondragover="event.preventDefault();this.style.borderColor='var(--sage-l)'"
+                 ondragleave="this.style.borderColor='var(--border)'"
+                 ondrop="coverDrop(event)">
+              <img id="cover-preview" alt="cover"/>
+              <div id="cz-ph">
+                <div class="cz-icon">📷</div>
+                <div class="cz-text">Upload cover image</div>
+                <div class="cz-sub">JPG · PNG · WEBP · GIF · SVG · AVIF</div>
+              </div>
+            </div>
+            <input type="file" id="cover-inp" accept="image/jpeg,image/jpg,image/png,image/webp,image/gif,image/svg+xml,image/avif" onchange="onCoverChange(event)"/>
+            <div id="cover-info" style="display:none;margin-top:7px;font-size:11px;color:var(--ink-l)"></div>
+            <button id="cover-remove" onclick="removeCover()" style="display:none;width:100%;margin-top:8px;padding:7px;border-radius:var(--r-sm);border:1px solid var(--rose-p);background:none;color:var(--rose);font-size:12px;cursor:pointer;font-weight:500">Remove image</button>
+          </div>
+        </div>
+
+        <!-- Post details -->
+        <div class="aside-card">
+          <div class="ac-head">📋 Post Details</div>
+          <div class="ac-body">
+            <div class="meta-field">
+              <label class="meta-label">Category</label>
+              <select class="meta-in" id="ed-cat">
+                <option value="">Select…</option>
+                <option>Philosophy</option><option>Culture</option>
+                <option>Books</option><option>Personal</option><option>Technology</option>
+              </select>
+            </div>
+            <div class="meta-field">
+              <label class="meta-label">Excerpt</label>
+              <textarea class="meta-in" id="ed-excerpt" placeholder="Short description for previews…"></textarea>
+            </div>
+            <div class="meta-field">
+              <label class="meta-label">Tags</label>
+              <div class="tags-field">
+                <div class="tags-wrap" id="tags-wrap"></div>
+                <input class="tags-input" id="tags-input" placeholder="Type + Enter…" onkeydown="addTagKey(event)"/>
+              </div>
+            </div>
+            <div class="meta-field">
+              <label class="meta-label">URL Slug</label>
+              <input class="meta-in" id="ed-slug" placeholder="post-url-slug" style="font-family:'JetBrains Mono',monospace;font-size:12px"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="aside-card">
+          <div class="ac-head">👁 Preview</div>
+          <div class="ac-body">
+            <button onclick="openPreview()" style="width:100%;padding:9px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--snow);font-size:13px;cursor:pointer;font-weight:500;color:var(--ink-s);transition:all .15s" onmouseover="this.style.background='var(--mist)'" onmouseout="this.style.background='var(--snow)'">Open preview →</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ DRAFTS ═══ -->
+  <div class="panel" id="panel-drafts">
+    <div id="drafts-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCHEDULED ═══ -->
+  <div class="panel" id="panel-scheduled">
+    <div id="scheduled-list" style="display:flex;flex-direction:column;gap:12px">
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+  <!-- ═══ MEDIA ═══ -->
+  <div class="panel" id="panel-media">
+    <div class="media-upload-zone" onclick="document.getElementById('media-upload-inp').click()"
+         ondragover="event.preventDefault();this.style.borderColor='var(--sage-l)'"
+         ondragleave="this.style.borderColor='var(--border)'"
+         ondrop="mediaDropUpload(event)">
+      <div style="font-size:28px;margin-bottom:8px">🖼</div>
+      <div style="font-size:14px;font-weight:500;color:var(--ink-s)">Drop images here or click to upload</div>
+      <div style="font-size:12px;color:var(--ink-l);margin-top:4px">JPG · PNG · WEBP · GIF · SVG · AVIF · Max 10MB</div>
+      <input type="file" id="media-upload-inp" accept="image/*" multiple style="display:none" onchange="handleMediaUpload(event)"/>
+    </div>
+    <div class="toolbar-row">
+      <div class="search-box" style="max-width:240px"><span style="color:var(--ink-l)">🔍</span><input placeholder="Search media…"/></div>
+      <div class="count-label" id="media-count">— files</div>
+    </div>
+    <div class="media-grid" id="media-grid"><div class="spinner"></div></div>
+  </div>
+
+  <!-- ═══ COMMENTS ═══ -->
+  <div class="panel" id="panel-comments">
+    <div class="toolbar-row">
+      <div class="search-box" style="max-width:260px"><span style="color:var(--ink-l)">🔍</span><input placeholder="Search comments…"/></div>
+      <select class="filter-sel">
+        <option>All comments</option><option>Pending</option><option>Approved</option><option>Spam</option>
+      </select>
+      <div class="count-label" id="comment-count">— comments</div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden">
+      <table class="data-table" style="width:100%">
+        <thead><tr>
+          <th style="padding:12px 0">Author</th><th>Comment</th><th>Post</th><th>Status</th><th>Date</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="comments-tbody"><tr><td colspan="6" style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ READERS CORNER ═══ -->
+  <div class="panel" id="panel-readers">
+    <div class="toolbar-row">
+      <div class="search-box" style="max-width:260px"><span style="color:var(--ink-l)">🔍</span><input placeholder="Search posts…"/></div>
+      <select class="filter-sel"><option>All types</option><option>Book Review</option><option>Discussion</option><option>Recommendation</option></select>
+      <div class="count-label" id="readers-count">— posts</div>
+    </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden">
+      <table class="data-table" style="width:100%">
+        <thead><tr>
+          <th style="padding:12px 0">Post</th><th>Type</th><th>Author</th><th>Votes</th><th>Date</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="readers-tbody"><tr><td colspan="6" style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ SETTINGS ═══ -->
+  <div class="panel" id="panel-settings">
+    <div class="settings-grid">
+      <div class="settings-card">
+        <div class="settings-title">Site Settings</div>
+        <div class="meta-field"><label class="meta-label">Site Name</label><input class="meta-in" value="halfsentence"/></div>
+        <div class="meta-field"><label class="meta-label">Tagline</label><input class="meta-in" value="Ideas that stop mid-thought and mean everything."/></div>
+        <div class="meta-field"><label class="meta-label">Posts per page</label><input class="meta-in" type="number" value="10" style="font-family:'JetBrains Mono',monospace"/></div>
+        <button class="topbar-btn tb-primary" onclick="saveSettings()" style="margin-top:6px">Save changes</button>
+      </div>
+      <div class="settings-card">
+        <div class="settings-title">Comments &amp; Reactions</div>
+        <div class="toggle-row"><div><div class="toggle-label">Allow comments</div><div class="toggle-sub">On all new posts</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-row"><div><div class="toggle-label">Reactions (👍 👎)</div><div class="toggle-sub">Show on posts</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-row"><div><div class="toggle-label">Moderate comments</div><div class="toggle-sub">Approve before showing</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-row"><div><div class="toggle-label">Readers' Corner</div><div class="toggle-sub">Community posts</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+      </div>
+      <div class="settings-card">
+        <div class="settings-title">Author Profile</div>
+        <div class="meta-field"><label class="meta-label">Display Name</label><input class="meta-in" value="halfsentence"/></div>
+        <div class="meta-field"><label class="meta-label">Bio</label><textarea class="meta-in">Writer. Reader. Someone who thinks too much and sleeps too little.</textarea></div>
+        <div class="meta-field"><label class="meta-label">Email</label><input class="meta-in" type="email" value="hello@halfsentence.com"/></div>
+        <button class="topbar-btn tb-primary" onclick="saveSettings()" style="margin-top:6px">Update profile</button>
+      </div>
+      <div class="settings-card">
+        <div class="settings-title">Integrations</div>
+        <div class="toggle-row"><div><div class="toggle-label">Newsletter</div><div class="toggle-sub">Auto-send on publish</div></div><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-row"><div><div class="toggle-label">RSS Feed</div><div class="toggle-sub">Public feed enabled</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="toggle-row"><div><div class="toggle-label">Google Analytics</div><div class="toggle-sub">Tracking enabled</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
+        <div class="meta-field" style="margin-top:12px"><label class="meta-label">Analytics ID</label><input class="meta-in" value="G-XXXXXXXXXX" style="font-family:'JetBrains Mono',monospace;font-size:12px"/></div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- end admin-content -->
+</div><!-- end admin-main -->
+</div><!-- end admin-layout -->
+
+<!-- Preview modal -->
+<div class="modal-overlay" id="prev-modal">
+  <div class="modal-shell">
+    <div class="modal-bar">
+      <span class="modal-bar-label">Post Preview</span>
+      <button class="modal-bar-close" onclick="closePreview()">✕</button>
+    </div>
+    <div class="modal-content">
+      <div id="mprev-cat" style="display:inline-block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--sage-d);background:var(--sage-p);padding:4px 12px;border-radius:99px;margin-bottom:14px"></div>
+      <div id="mprev-title" style="font-family:'Lora',serif;font-size:30px;font-weight:700;line-height:1.15;margin-bottom:14px;color:var(--ink)"></div>
+      <div id="mprev-meta" style="font-size:12px;color:var(--ink-l);margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid var(--border-l)"></div>
+      <img id="mprev-cover" alt="cover" style="display:none;width:100%;height:200px;object-fit:cover;border-radius:var(--r);margin-bottom:22px"/>
+      <div id="mprev-body" style="font-family:'Crimson Pro',serif;font-size:18px;line-height:1.8;color:var(--ink-s)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm delete -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <div class="cb-icon">🗑</div>
+    <div class="cb-title">Delete this?</div>
+    <div class="cb-text">This action cannot be undone.</div>
+    <div class="cb-actions">
+      <button class="cb-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="cb-confirm" onclick="doDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+import {
+  requireAuth, navTo, toast, loadDashboard, loadPosts, editPost,
+  savePost, uploadCover, setCoverPreview, importFile, addTagKey,
+  loadComments, loadMedia, loadReadersAdmin, saveSettings, formatDate,
+  updateWordCount, submitReadersPost, confirmDelete, logout
+} from './admin.js'
+import { supabase } from '../js/supabase.js'
+
+// ── Auth check ────────────────────────────────────
+await requireAuth()
+
+// ── Init dashboard ────────────────────────────────
+loadDashboard()
+loadNavBadges()
+renderChart()
+
+// ── Nav badges ────────────────────────────────────
+async function loadNavBadges() {
+  const { count: p } = await supabase.from('posts').select('*',{count:'exact',head:true}).eq('status','published')
+  const { count: d } = await supabase.from('posts').select('*',{count:'exact',head:true}).eq('status','draft')
+  const { count: s } = await supabase.from('posts').select('*',{count:'exact',head:true}).eq('status','scheduled')
+  const { count: c } = await supabase.from('comments').select('*',{count:'exact',head:true}).eq('status','pending')
+  setEl('nav-post-count',  p||0)
+  setEl('nav-draft-count', d||0)
+  setEl('nav-sched-count', s||0)
+  setEl('nav-comm-count',  c||0)
+}
+
+// ── Traffic chart (simulated — replace with real analytics) ──
+function renderChart() {
+  const data = [{d:'Mon',v:480},{d:'Tue',v:620},{d:'Wed',v:390},{d:'Thu',v:720},{d:'Fri',v:510},{d:'Sat',v:860},{d:'Sun',v:640}]
+  const max  = Math.max(...data.map(x=>x.v))
+  const el   = document.getElementById('traffic-chart')
+  if (!el) return
+  el.innerHTML = data.map(x=>`
+    <div class="bar-col">
+      <div class="bar-track">
+        <div class="bar-fill" style="height:${(x.v/max*78).toFixed(0)}px" data-v="${x.v}"></div>
+      </div>
+      <div class="bar-label">${x.d}</div>
+    </div>`).join('')
+}
+
+// ── New post (clear editor) ───────────────────────
+window.newPost = () => {
+  window._editingId = null
+  setVal('ed-title',''); setVal('ed-cat',''); setVal('ed-excerpt',''); setVal('ed-slug','')
+  const rte = document.getElementById('rte'); if (rte) rte.innerHTML = ''
+  document.getElementById('tags-wrap').innerHTML = ''
+  window._tagsList = []
+  removeCover()
+  document.getElementById('sched-picker').style.display = 'none'
+  updateWordCount()
+}
+
+// ── Expose to global scope ────────────────────────
+window.loadPosts       = (f={}) => loadPosts(f)
+window.loadComments    = loadComments
+window.loadMedia       = loadMedia
+window.loadReadersAdmin= loadReadersAdmin
+window.saveSettings    = saveSettings
+window.editPost        = editPost
+window.savePost        = savePost
+window.addTagKey       = addTagKey
+window.updateWordCount = updateWordCount
+window.confirmDelete   = confirmDelete
+window.logout          = logout
+
+// ── Cover image ───────────────────────────────────
+window.onCoverChange = async (e) => {
+  const file = e.target.files[0]; if (!file) return
+  setCoverPreview(file)
+  await uploadCover(file)
+}
+window.coverDrop = async (e) => {
+  e.preventDefault()
+  document.getElementById('cover-zone').style.borderColor = 'var(--border)'
+  const file = e.dataTransfer.files[0]; if (!file) return
+  setCoverPreview(file)
+  await uploadCover(file)
+}
+
+// ── Media upload ──────────────────────────────────
+window.mediaDropUpload = (e) => {
+  e.preventDefault()
+  const files = e.dataTransfer.files
+  handleFiles(files)
+}
+window.handleMediaUpload = (e) => handleFiles(e.target.files)
+
+async function handleFiles(files) {
+  for (const file of files) { await uploadCover(file) }
+  loadMedia()
+}
+
+// ── Slug auto-generate ────────────────────────────
+window.autoSlug = () => {
+  const title = document.getElementById('ed-title')?.value || ''
+  const slug  = title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')
+  setVal('ed-slug', slug)
+}
+
+// ── Drafts panel ──────────────────────────────────
+window.loadDraftsList = async () => {
+  const grid = document.getElementById('drafts-grid')
+  grid.innerHTML = '<div class="spinner"></div>'
+  const { data } = await supabase.from('posts').select('id,title,category,updated_at,body').eq('status','draft').order('updated_at',{ascending:false})
+  if (!data?.length) { grid.innerHTML='<div style="color:var(--ink-l);font-size:13px;padding:20px">No drafts yet.</div>'; return }
+  grid.innerHTML = data.map(p=>`
+    <div class="card" style="cursor:pointer" onclick="editPost('${p.id}');navTo('editor',null)">
+      <div style="background:var(--fog);padding:18px 20px">
+        <span class="status-pill sp-draft" style="margin-bottom:10px;display:inline-block">Draft</span>
+        <div style="font-family:'Lora',serif;font-size:15px;font-weight:600;margin-bottom:6px">${p.title}</div>
+        <div style="font-size:11px;color:var(--ink-l)">${p.category||'Uncategorized'} · Last edited ${formatDate(p.updated_at||p.created_at)}</div>
+      </div>
+      <div style="padding:10px 20px;display:flex;gap:8px">
+        <button class="ra ra-edit" onclick="event.stopPropagation();editPost('${p.id}');navTo('editor',null)">Edit</button>
+        <button class="ra ra-del" onclick="event.stopPropagation();confirmDelete('${p.id}')">Delete</button>
+      </div>
+    </div>`).join('')
+}
+
+// ── Scheduled panel ────────────────────────────────
+window.loadScheduledList = async () => {
+  const list = document.getElementById('scheduled-list')
+  list.innerHTML = '<div class="spinner"></div>'
+  const { data } = await supabase.from('posts').select('id,title,category,scheduled_at').eq('status','scheduled').order('scheduled_at',{ascending:true})
+  if (!data?.length) { list.innerHTML='<div style="color:var(--ink-l);font-size:13px;padding:20px">No scheduled posts.</div>'; return }
+  list.innerHTML = data.map(p=>{
+    const d = new Date(p.scheduled_at)
+    const day = d.getDate()
+    const mon = d.toLocaleString('en-GB',{month:'short'}).toUpperCase()
+    const time = d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
+    return `
+      <div class="card">
+        <div style="padding:16px 20px;display:flex;align-items:center;gap:16px">
+          <div style="background:var(--amber-p);border-radius:var(--r);padding:10px 14px;text-align:center;flex-shrink:0">
+            <div style="font-family:'Lora',serif;font-size:20px;font-weight:700;color:var(--amber)">${day}</div>
+            <div style="font-size:10px;color:var(--amber);font-weight:600;letter-spacing:.06em">${mon}</div>
+          </div>
+          <div style="flex:1">
+            <span class="status-pill sp-sched" style="margin-bottom:6px;display:inline-block">Scheduled · ${time}</span>
+            <div style="font-family:'Lora',serif;font-size:15px;font-weight:600">${p.title}</div>
+            <div style="font-size:11px;color:var(--ink-l);margin-top:3px">${p.category||''}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="ra ra-edit" onclick="editPost('${p.id}');navTo('editor',null)">Edit</button>
+            <button class="ra ra-del" onclick="confirmDelete('${p.id}')">Unschedule</button>
+          </div>
+        </div>
+      </div>`}).join('')
+}
+
+// ── Activity feed (recent comments + reactions) ────
+async function loadActivity() {
+  const { data: comments } = await supabase
+    .from('comments').select('author,post_id,created_at').order('created_at',{ascending:false}).limit(5)
+  const list = document.getElementById('activity-list')
+  if (!list) return
+  if (!comments?.length) { list.innerHTML = '<div style="color:var(--ink-l);font-size:13px;padding:16px 0">No recent activity.</div>'; return }
+  list.innerHTML = comments.map(c=>`
+    <div class="act-item">
+      <div class="act-icon" style="background:var(--sage-p)">💬</div>
+      <div>
+        <div class="act-text"><strong>${c.author||'Someone'}</strong> left a comment</div>
+        <div class="act-time">${timeAgo(c.created_at)}</div>
+      </div>
+    </div>`).join('')
+}
+
+function timeAgo(iso) {
+  const m = Math.floor((Date.now()-new Date(iso))/60000)
+  if (m<60) return m+'m ago'; if (m<1440) return Math.floor(m/60)+'h ago'; return Math.floor(m/1440)+'d ago'
+}
+
+loadActivity()
+
+// ── Helper ────────────────────────────────────────
+function setEl(id,t) { const e=document.getElementById(id); if(e) e.textContent=t }
+function setVal(id,v) { const e=document.getElementById(id); if(e) e.value=v }
+
+// ── Keyboard ──────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') { closePreview?.(); closeConfirm?.() }
+})
+</script>
+</body>
+</html>

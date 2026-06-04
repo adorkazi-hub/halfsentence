@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Admin Login · halfsentence</title>
+  <link rel="stylesheet" href="../css/admin.css"/>
+</head>
+<body>
+
+<div class="login-page">
+  <div class="login-box">
+    <div class="login-logo">halfsentence<span style="width:4px;height:4px;background:var(--sage);border-radius:50%;display:inline-block;margin-left:2px;margin-bottom:4px;vertical-align:bottom"></span></div>
+    <div class="login-sub">Admin · Sign in to continue</div>
+
+    <div class="login-field">
+      <label class="login-label">Email</label>
+      <input class="login-in" id="login-email" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter') doLogin()"/>
+    </div>
+    <div class="login-field">
+      <label class="login-label">Password</label>
+      <input class="login-in" id="login-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') doLogin()"/>
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign in</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { login } from './admin.js'
+
+  // If already logged in, redirect
+  import { supabase } from '../js/supabase.js'
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.href = '/admin/dashboard.html'
+  })
+
+  window.doLogin = () => {
+    const email = document.getElementById('login-email').value.trim()
+    const pass  = document.getElementById('login-pass').value
+    if (!email || !pass) {
+      document.getElementById('login-error').textContent = 'Please enter email and password.'
+      return
+    }
+    login(email, pass)
+  }
+</script>
+</body>
+</html>

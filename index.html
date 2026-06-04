@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>halfsentence</title>
+  <meta name="description" content="Essays, observations, and half-formed ideas on books, culture, and the quiet weight of ordinary moments."/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">halfsentence<span class="nav-logo-dot"></span></a>
+    <div class="nav-links">
+      <a class="nav-link active" href="index.html">Home</a>
+      <a class="nav-link" href="readers.html">Readers' Corner</a>
+      <a class="nav-link" href="about.html">About</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero container">
+  <div>
+    <div class="hero-eyebrow">A personal space for writing &amp; reading</div>
+    <h1 class="hero-title">Ideas that stop<br/>mid-<em>thought</em> and<br/>mean everything.</h1>
+    <p class="hero-desc">Essays, observations, and half-formed ideas on books, culture, and the quiet weight of ordinary moments.</p>
+    <div class="hero-tags">
+      <span class="hero-tag">Philosophy</span>
+      <span class="hero-tag">Culture</span>
+      <span class="hero-tag">Books</span>
+      <span class="hero-tag">Personal</span>
+      <span class="hero-tag">Technology</span>
+    </div>
+  </div>
+  <div class="hero-side">
+    <div class="hero-side-label">Currently reading</div>
+    <div class="hero-side-quote">"He who has a why to live can bear almost any how."</div>
+    <div class="hero-side-attr">— Viktor Frankl, Man's Search for Meaning</div>
+  </div>
+</div>
+
+<!-- FEATURED -->
+<div class="container">
+  <div class="section-header">
+    <div class="section-title">Featured</div>
+  </div>
+</div>
+<div class="featured-grid" id="featured-wrap">
+  <!-- Loaded by JS -->
+  <div class="spinner"></div>
+</div>
+
+<!-- RECENT POSTS -->
+<div class="container">
+  <div class="section-header">
+    <div class="section-title">Recent Posts</div>
+  </div>
+</div>
+<div class="posts-grid" id="posts-wrap">
+  <!-- Loaded by JS -->
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>© 2026 <span>halfsentence</span> · Made with words and too much coffee</p>
+</footer>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { loadHome } from './js/main.js'
+  loadHome()
+</script>
+</body>
+</html>

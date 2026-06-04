@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Readers' Corner · halfsentence</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">halfsentence<span class="nav-logo-dot"></span></a>
+    <div class="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link active" href="readers.html">Readers' Corner</a>
+      <a class="nav-link" href="about.html">About</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:48px;padding-bottom:80px">
+
+  <div class="readers-banner">
+    <div>
+      <h1>Readers' Corner</h1>
+      <p>Share book reviews, recommendations, and start discussions — like a small, thoughtful reading group.</p>
+    </div>
+    <button class="btn-primary" onclick="document.getElementById('new-post-modal').classList.add('open')">+ New Post</button>
+  </div>
+
+  <div class="readers-layout">
+
+    <!-- Sidebar -->
+    <div class="readers-sidebar">
+      <div class="rs-section">
+        <div class="rs-label">Browse</div>
+        <button class="rs-item active" onclick="filterFeed('',this)">📚 All posts</button>
+        <button class="rs-item" onclick="filterFeed('review',this)">⭐ Book Reviews</button>
+        <button class="rs-item" onclick="filterFeed('discussion',this)">💬 Discussions</button>
+        <button class="rs-item" onclick="filterFeed('recommendation',this)">📖 Recommendations</button>
+      </div>
+      <div class="rs-section">
+        <div class="rs-label">Sort</div>
+        <button class="rs-item active" onclick="sortFeed('votes',this)">🔥 Hot</button>
+        <button class="rs-item" onclick="sortFeed('created_at',this)">🆕 New</button>
+      </div>
+    </div>
+
+    <!-- Feed -->
+    <div id="readers-feed">
+      <div class="spinner"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- New Post Modal -->
+<div class="modal-bg" id="new-post-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>New Post</h3>
+      <button class="modal-close" onclick="document.getElementById('new-post-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <label class="form-label">Post type</label>
+        <select class="form-select" id="np-type">
+          <option value="review">Book Review</option>
+          <option value="discussion">Discussion</option>
+          <option value="recommendation">Recommendation</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Your name</label>
+        <input class="form-input" id="np-author" placeholder="How should we call you?"/>
+      </div>
+      <div>
+        <label class="form-label">Title</label>
+        <input class="form-input" id="np-title" placeholder="What's this post about?"/>
+      </div>
+      <div>
+        <label class="form-label">Book (if applicable)</label>
+        <input class="form-input" id="np-book" placeholder="Book title · Author"/>
+      </div>
+      <div>
+        <label class="form-label">Your thoughts</label>
+        <textarea class="form-textarea" id="np-body" placeholder="Share your review, recommendation, or discussion prompt…"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="document.getElementById('new-post-modal').classList.remove('open')">Cancel</button>
+      <button class="btn-primary" onclick="submitNewPost()">Post</button>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>© 2026 <span>halfsentence</span> · Made with words and too much coffee</p>
+</footer>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { loadReadersCorner, submitReadersPost } from './js/main.js'
+
+  let currentFilter = '', currentSort = 'votes'
+  loadReadersCorner()
+
+  window.filterFeed = (type, btn) => {
+    currentFilter = type
+    document.querySelectorAll('.rs-item').forEach(i => {
+      if (i.textContent.includes('All') || i.textContent.includes('Review') ||
+          i.textContent.includes('Disc') || i.textContent.includes('Rec')) {
+        i.classList.remove('active')
+      }
+    })
+    btn.classList.add('active')
+    loadReadersCorner(currentFilter, currentSort)
+  }
+
+  window.sortFeed = (sort, btn) => {
+    currentSort = sort
+    document.querySelectorAll('.rs-item').forEach(i => {
+      if (i.textContent.includes('Hot') || i.textContent.includes('New')) i.classList.remove('active')
+    })
+    btn.classList.add('active')
+    loadReadersCorner(currentFilter, currentSort)
+  }
+
+  window.submitNewPost = async () => {
+    const type   = document.getElementById('np-type').value
+    const author = document.getElementById('np-author').value.trim()
+    const title  = document.getElementById('np-title').value.trim()
+    const body   = document.getElementById('np-body').value.trim()
+    const book   = document.getElementById('np-book').value.trim()
+    if (!title || !body) { import('./js/main.js').then(m => m.toast('⚠️ Add a title and your thoughts')); return }
+    const ok = await submitReadersPost({ type, author, title, body, book_title: book, votes: 0 })
+    if (ok) {
+      document.getElementById('new-post-modal').classList.remove('open')
+      ;['np-author','np-title','np-book','np-body'].forEach(id => document.getElementById(id).value = '')
+      loadReadersCorner()
+    }
+  }
+</script>
+</body>
+</html>

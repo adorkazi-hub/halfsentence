@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>halfsentence</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="index.html">halfsentence<span class="nav-logo-dot"></span></a>
+    <div class="nav-links">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link" href="readers.html">Readers' Corner</a>
+      <a class="nav-link" href="about.html">About</a>
+    </div>
+  </div>
+</nav>
+
+<div id="post-wrap">
+  <div style="max-width:720px;margin:60px auto;padding:0 32px">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>© 2026 <span>halfsentence</span> · Made with words and too much coffee</p>
+</footer>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+  import { loadPost } from './js/main.js'
+  loadPost()
+</script>
+</body>
+</html>
