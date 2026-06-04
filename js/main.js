@@ -385,3 +385,53 @@ function timeAgo(iso) {
   if (m < 1440) return Math.floor(m / 60) + 'h ago'
   return Math.floor(m / 1440) + 'd ago'
 }
+
+// ── ABOUT PAGE (from site_settings) ──────────────────────
+export async function loadAboutPage() {
+  const nameEl = document.getElementById('about-name')
+  if (!nameEl) return
+
+  const { data, error } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle()
+  if (error) {
+    console.error(error)
+    const body = document.getElementById('about-body')
+    if (body) body.innerHTML = '<p>Could not load About page. Run supabase-patch.sql in your Supabase project.</p>'
+    return
+  }
+  if (!data) return
+
+  const name = data.author_name || data.site_name || 'halfsentence'
+  const avatar = document.getElementById('about-avatar')
+  if (avatar) avatar.textContent = (name[0] || 'h').toUpperCase()
+  if (nameEl) nameEl.textContent = name
+
+  const tagEl = document.getElementById('about-tagline')
+  if (tagEl && data.author_bio) tagEl.textContent = data.author_bio
+
+  const bodyEl = document.getElementById('about-body')
+  if (bodyEl && data.about_html) bodyEl.innerHTML = data.about_html
+
+  const linksEl = document.getElementById('about-links')
+  if (linksEl) {
+    const links = []
+    if (data.author_email)
+      links.push(`<a class="about-link" href="mailto:${escapeAttr(data.author_email)}">✉ Email</a>`)
+    if (data.link_twitter)
+      links.push(`<a class="about-link" href="${escapeAttr(data.link_twitter)}" target="_blank" rel="noopener">𝕏 Twitter</a>`)
+    if (data.link_goodreads)
+      links.push(`<a class="about-link" href="${escapeAttr(data.link_goodreads)}" target="_blank" rel="noopener">📚 Goodreads</a>`)
+    if (data.link_newsletter)
+      links.push(`<a class="about-link" href="${escapeAttr(data.link_newsletter)}" target="_blank" rel="noopener">📰 Newsletter</a>`)
+    linksEl.innerHTML = links.join('')
+  }
+
+  const footerName = document.getElementById('footer-site-name')
+  if (footerName && data.site_name) footerName.textContent = data.site_name
+}
+
+function escapeAttr(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+}

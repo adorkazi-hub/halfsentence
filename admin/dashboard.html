@@ -31,7 +31,7 @@
     <button class="sb-item" onclick="navTo('readers',this);loadReadersAdmin()"><span class="sb-icon">📚</span> Readers' Corner</button>
 
     <div class="sb-group">Site</div>
-    <button class="sb-item" onclick="navTo('settings',this)"><span class="sb-icon">⚙️</span> Settings</button>
+    <button class="sb-item" onclick="navTo('settings',this);loadSettings()"><span class="sb-icon">⚙️</span> Settings</button>
   </nav>
   <div class="sb-footer">
     <div class="sb-user">
@@ -369,9 +369,9 @@
     <div class="settings-grid">
       <div class="settings-card">
         <div class="settings-title">Site Settings</div>
-        <div class="meta-field"><label class="meta-label">Site Name</label><input class="meta-in" value="halfsentence"/></div>
-        <div class="meta-field"><label class="meta-label">Tagline</label><input class="meta-in" value="Ideas that stop mid-thought and mean everything."/></div>
-        <div class="meta-field"><label class="meta-label">Posts per page</label><input class="meta-in" type="number" value="10" style="font-family:'JetBrains Mono',monospace"/></div>
+        <div class="meta-field"><label class="meta-label">Site Name</label><input class="meta-in" id="set-site-name" value="halfsentence"/></div>
+        <div class="meta-field"><label class="meta-label">Tagline</label><input class="meta-in" id="set-tagline" value="Ideas that stop mid-thought and mean everything."/></div>
+        <div class="meta-field"><label class="meta-label">Posts per page</label><input class="meta-in" id="set-posts-per-page" type="number" value="10" style="font-family:'JetBrains Mono',monospace"/></div>
         <button class="topbar-btn tb-primary" onclick="saveSettings()" style="margin-top:6px">Save changes</button>
       </div>
       <div class="settings-card">
@@ -383,10 +383,18 @@
       </div>
       <div class="settings-card">
         <div class="settings-title">Author Profile</div>
-        <div class="meta-field"><label class="meta-label">Display Name</label><input class="meta-in" value="halfsentence"/></div>
-        <div class="meta-field"><label class="meta-label">Bio</label><textarea class="meta-in">Writer. Reader. Someone who thinks too much and sleeps too little.</textarea></div>
-        <div class="meta-field"><label class="meta-label">Email</label><input class="meta-in" type="email" value="hello@halfsentence.com"/></div>
+        <div class="meta-field"><label class="meta-label">Display Name</label><input class="meta-in" id="set-author-name" value="halfsentence"/></div>
+        <div class="meta-field"><label class="meta-label">Bio (short tagline on About)</label><textarea class="meta-in" id="set-author-bio" rows="2">Writer. Reader. Someone who thinks too much and sleeps too little.</textarea></div>
+        <div class="meta-field"><label class="meta-label">Email</label><input class="meta-in" id="set-author-email" type="email" value="hello@halfsentence.com"/></div>
         <button class="topbar-btn tb-primary" onclick="saveSettings()" style="margin-top:6px">Update profile</button>
+      </div>
+      <div class="settings-card" style="grid-column:1/-1">
+        <div class="settings-title">About Page &amp; Contact Links</div>
+        <div class="meta-field"><label class="meta-label">About page body (HTML allowed: &lt;p&gt;, &lt;h2&gt;, &lt;strong&gt;, etc.)</label><textarea class="meta-in" id="set-about-html" rows="10" style="font-family:'JetBrains Mono',monospace;font-size:12px"></textarea></div>
+        <div class="meta-field"><label class="meta-label">Twitter / X URL</label><input class="meta-in" id="set-link-twitter" placeholder="https://x.com/yourhandle"/></div>
+        <div class="meta-field"><label class="meta-label">Goodreads URL</label><input class="meta-in" id="set-link-goodreads" placeholder="https://goodreads.com/..."/></div>
+        <div class="meta-field"><label class="meta-label">Newsletter URL</label><input class="meta-in" id="set-link-newsletter" placeholder="https://..."/></div>
+        <button class="topbar-btn tb-primary" onclick="saveSettings()" style="margin-top:6px">Save About &amp; contact</button>
       </div>
       <div class="settings-card">
         <div class="settings-title">Integrations</div>
@@ -436,9 +444,9 @@
 
 <script type="module">
 import {
-  requireAuth, navTo, toast, loadDashboard, loadPosts, editPost,
+  requireAuth, navTo, toast, loadDashboard, loadPosts, editPost, newPost,
   savePost, uploadCover, setCoverPreview, importFile, addTagKey,
-  loadComments, loadMedia, loadReadersAdmin, saveSettings, formatDate,
+  loadComments, loadMedia, loadReadersAdmin, loadSettings, saveSettings, formatDate,
   updateWordCount, submitReadersPost, confirmDelete, logout
 } from '/admin/admin.js'
 import { supabase } from '/js/supabase.js'
@@ -478,24 +486,14 @@ function renderChart() {
     </div>`).join('')
 }
 
-// ── New post (clear editor) ───────────────────────
-window.newPost = () => {
-  window._editingId = null
-  setVal('ed-title',''); setVal('ed-cat',''); setVal('ed-excerpt',''); setVal('ed-slug','')
-  const rte = document.getElementById('rte'); if (rte) rte.innerHTML = ''
-  document.getElementById('tags-wrap').innerHTML = ''
-  window._tagsList = []
-  removeCover()
-  document.getElementById('sched-picker').style.display = 'none'
-  updateWordCount()
-}
-
 // ── Expose to global scope ────────────────────────
 window.loadPosts       = (f={}) => loadPosts(f)
 window.loadComments    = loadComments
 window.loadMedia       = loadMedia
 window.loadReadersAdmin= loadReadersAdmin
+window.loadSettings    = loadSettings
 window.saveSettings    = saveSettings
+window.newPost         = newPost
 window.editPost        = editPost
 window.savePost        = savePost
 window.addTagKey       = addTagKey

@@ -113,7 +113,11 @@ export async function loadPosts(filter = {}) {
   if (filter.search) query = query.ilike('title', `%${filter.search}%`)
 
   const { data: posts, error } = await query
-  if (error) { console.error(error); return }
+  if (error) {
+    console.error(error)
+    toast('❌ Could not load posts: ' + error.message)
+    return
+  }
 
   const countEl = document.getElementById('post-count')
   if (countEl) countEl.textContent = (posts?.length || 0) + ' posts'
@@ -160,6 +164,24 @@ export async function loadPosts(filter = {}) {
 // ── EDITOR ───────────────────────────────────────────────
 let editingId = null
 const tagsList = []
+
+export function newPost() {
+  editingId = null
+  tagsList.length = 0
+  setVal('ed-title', '')
+  setVal('ed-cat', '')
+  setVal('ed-excerpt', '')
+  setVal('ed-slug', '')
+  const rte = document.getElementById('rte')
+  if (rte) rte.innerHTML = ''
+  const tagsWrap = document.getElementById('tags-wrap')
+  if (tagsWrap) tagsWrap.innerHTML = ''
+  const sched = document.getElementById('sched-picker')
+  if (sched) sched.style.display = 'none'
+  if (typeof window.removeCover === 'function') window.removeCover()
+  updateWordCount()
+}
+window.newPost = newPost
 
 export async function editPost(id) {
   editingId = id
@@ -487,10 +509,50 @@ export async function loadMedia() {
 }
 
 // ── SETTINGS ─────────────────────────────────────────────
+export async function loadSettings() {
+  const { data, error } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle()
+  if (error) {
+    toast('❌ Could not load settings: ' + error.message)
+    return
+  }
+  if (!data) return
+
+  setVal('set-site-name', data.site_name)
+  setVal('set-tagline', data.tagline)
+  setVal('set-posts-per-page', data.posts_per_page ?? 10)
+  setVal('set-author-name', data.author_name)
+  setVal('set-author-bio', data.author_bio)
+  setVal('set-author-email', data.author_email)
+  setVal('set-about-html', data.about_html)
+  setVal('set-link-twitter', data.link_twitter)
+  setVal('set-link-goodreads', data.link_goodreads)
+  setVal('set-link-newsletter', data.link_newsletter)
+}
+window.loadSettings = loadSettings
+
 export async function saveSettings() {
-  // You can store settings in a Supabase 'settings' table
-  // For now just show a toast
-  toast('✅ Settings saved')
+  const payload = {
+    id: 1,
+    site_name: getVal('set-site-name'),
+    tagline: getVal('set-tagline'),
+    posts_per_page: parseInt(getVal('set-posts-per-page'), 10) || 10,
+    author_name: getVal('set-author-name'),
+    author_bio: getVal('set-author-bio'),
+    author_email: getVal('set-author-email'),
+    about_html: getVal('set-about-html'),
+    link_twitter: getVal('set-link-twitter'),
+    link_goodreads: getVal('set-link-goodreads'),
+    link_newsletter: getVal('set-link-newsletter'),
+    updated_at: new Date().toISOString()
+  }
+
+  const { error } = await supabase.from('site_settings').upsert(payload)
+  if (error) {
+    toast('❌ Save failed: ' + error.message)
+    console.error('Settings save error:', error)
+    return
+  }
+  toast('✅ Settings saved — refresh your About page to see changes')
 }
 window.saveSettings = saveSettings
 
