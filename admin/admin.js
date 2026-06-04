@@ -44,6 +44,15 @@ export function navTo(id, btn) {
 }
 window.navTo = navTo
 
+// Expose for dashboard onclick handlers (even if dashboard module init fails later)
+window.loadDashboard = loadDashboard
+window.loadPosts = loadPosts
+window.loadComments = loadComments
+window.loadMedia = loadMedia
+window.loadReadersAdmin = loadReadersAdmin
+window.loadSettings = loadSettings
+window.saveSettings = saveSettings
+
 // ── DASHBOARD STATS ──────────────────────────────────────
 export async function loadDashboard() {
   // Posts count

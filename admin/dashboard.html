@@ -447,12 +447,29 @@ import {
   requireAuth, navTo, toast, loadDashboard, loadPosts, editPost, newPost,
   savePost, uploadCover, setCoverPreview, importFile, addTagKey,
   loadComments, loadMedia, loadReadersAdmin, loadSettings, saveSettings, formatDate,
-  updateWordCount, submitReadersPost, confirmDelete, logout
+  updateWordCount, confirmDelete, logout
 } from '/admin/admin.js'
 import { supabase } from '/js/supabase.js'
 
+// Bind handlers for onclick="" before any async work (module must not crash)
+window.navTo = navTo
+window.loadPosts = (f = {}) => loadPosts(f)
+window.loadComments = loadComments
+window.loadMedia = loadMedia
+window.loadReadersAdmin = loadReadersAdmin
+window.loadSettings = loadSettings
+window.saveSettings = saveSettings
+window.newPost = newPost
+window.editPost = editPost
+window.savePost = savePost
+window.addTagKey = addTagKey
+window.updateWordCount = updateWordCount
+window.confirmDelete = confirmDelete
+window.logout = logout
+
 // ── Auth check ────────────────────────────────────
-await requireAuth()
+const session = await requireAuth()
+if (!session) throw new Error('Not signed in')
 
 // ── Init dashboard ────────────────────────────────
 loadDashboard()
@@ -485,21 +502,6 @@ function renderChart() {
       <div class="bar-label">${x.d}</div>
     </div>`).join('')
 }
-
-// ── Expose to global scope ────────────────────────
-window.loadPosts       = (f={}) => loadPosts(f)
-window.loadComments    = loadComments
-window.loadMedia       = loadMedia
-window.loadReadersAdmin= loadReadersAdmin
-window.loadSettings    = loadSettings
-window.saveSettings    = saveSettings
-window.newPost         = newPost
-window.editPost        = editPost
-window.savePost        = savePost
-window.addTagKey       = addTagKey
-window.updateWordCount = updateWordCount
-window.confirmDelete   = confirmDelete
-window.logout          = logout
 
 // ── Cover image ───────────────────────────────────
 window.onCoverChange = async (e) => {
