@@ -28,10 +28,8 @@
 </div>
 
 <script type="module">
-  import { login } from './admin.js'
-
-  // If already logged in, redirect
-  import { supabase } from '../js/supabase.js'
+  import { login } from '/admin/admin.js'
+  import { supabase } from '/js/supabase.js'
   supabase.auth.getSession().then(({ data: { session } }) => {
     if (session) window.location.href = '/admin/dashboard.html'
   })

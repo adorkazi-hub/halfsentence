@@ -3,7 +3,7 @@
 //  Admin panel logic + Supabase operations
 // ═══════════════════════════════════════════════
 
-import { supabase } from '../js/supabase.js'
+import { supabase } from '/js/supabase.js'
 
 // ── Auth guard (runs on every admin page) ────────────────
 export async function requireAuth() {
@@ -542,7 +542,16 @@ export async function login(email, password) {
 
   if (error) {
     if (btn) btn.textContent = 'Sign in'
-    if (err) err.textContent = 'Invalid email or password. Try again.'
+    if (err) {
+      const msg = error.message || ''
+      if (msg.toLowerCase().includes('email not confirmed'))
+        err.textContent = 'Email not confirmed. In Supabase → Authentication → Users, confirm the user or turn off “Confirm email”.'
+      else if (msg.toLowerCase().includes('invalid login'))
+        err.textContent = 'Invalid email or password. Use a user created in Supabase with a password (not invite-only).'
+      else
+        err.textContent = msg || 'Sign-in failed. Check the browser console (F12) for details.'
+    }
+    console.error('Login error:', error)
     return
   }
   window.location.href = '/admin/dashboard.html'
