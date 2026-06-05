@@ -28,6 +28,14 @@ function spinner() {
   return '<div class="spinner"></div><div class="loading-text">Loading…</div>'
 }
 
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 function avatarColor(name) {
   const colors = ['#6B9E7A','#7A8AAE','#C47A6B','#9B7CC0','#A07AB5','#8AAD82','#6BA3AE']
   let h = 0; for (let c of (name||'')) h = c.charCodeAt(0) + ((h << 5) - h)
@@ -147,46 +155,51 @@ export async function loadHome() {
 export async function loadPost() {
   const params = new URLSearchParams(window.location.search)
   const id     = params.get('id')
+  const slug   = params.get('slug')
   const wrap   = document.getElementById('post-wrap')
-  if (!wrap || !id) return
+  if (!wrap) return
 
-  wrap.innerHTML = spinner()
-
-  // Increment views
-  await supabase.rpc('increment_views', { post_id: id }).catch(() => {})
-
-  const { data: post, error } = await supabase
-    .from('posts')
-    .select('*')
-    .eq('id', id)
-    .eq('status', 'published')
-    .single()
-
-  if (error || !post) {
-    wrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">Post not found.</div></div>'
+  if (!id && !slug) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">No post selected. <a href="index.html">Back to home</a></div></div>'
     return
   }
 
-  // Reactions
-  const { data: reactions } = await supabase.from('reactions').select('type').eq('post_id', id)
-  const likes = reactions?.filter(r => r.type === 'like').length || 0
-  const hates = reactions?.filter(r => r.type === 'hate').length || 0
+  wrap.innerHTML = spinner()
 
-  // Comments
-  const { data: comments } = await supabase
-    .from('comments')
-    .select('*')
-    .eq('post_id', id)
-    .eq('status', 'approved')
-    .order('created_at', { ascending: true })
+  try {
+    let query = supabase.from('posts').select('*').eq('status', 'published')
+    if (id) query = query.eq('id', id)
+    else query = query.eq('slug', slug)
 
-  document.title = post.title + ' · halfsentence'
+    const { data: post, error } = await query.single()
 
-  wrap.innerHTML = `
+    if (error || !post) {
+      wrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">Post not found.</div></div>'
+      return
+    }
+
+    const postId = post.id
+
+    // Reactions
+    const { data: reactions } = await supabase.from('reactions').select('type').eq('post_id', postId)
+    const likes = reactions?.filter(r => r.type === 'like').length || 0
+    const hates = reactions?.filter(r => r.type === 'hate').length || 0
+
+    // Comments
+    const { data: comments } = await supabase
+      .from('comments')
+      .select('*')
+      .eq('post_id', postId)
+      .eq('status', 'approved')
+      .order('created_at', { ascending: true })
+
+    document.title = escapeHtml(post.title) + ' · halfsentence'
+
+    wrap.innerHTML = `
     <div class="post-page fade-up">
       <button class="post-back" onclick="window.location.href='index.html'">← All posts</button>
-      <div class="post-cat">${post.category || 'Essay'}</div>
-      <h1 class="post-title">${post.title}</h1>
+      <div class="post-cat">${escapeHtml(post.category || 'Essay')}</div>
+      <h1 class="post-title">${escapeHtml(post.title)}</h1>
       <div class="post-byline">
         <span>halfsentence</span>
         <span class="post-byline-dot">·</span>
@@ -196,15 +209,15 @@ export async function loadPost() {
         <span class="post-byline-dot">·</span>
         <span>${post.views || 0} views</span>
       </div>
-      ${post.cover_url ? `<img class="post-cover" src="${post.cover_url}" alt="${post.title}" loading="lazy"/>` : ''}
+      ${post.cover_url ? `<img class="post-cover" src="${escapeHtml(post.cover_url)}" alt="${escapeHtml(post.title)}" loading="lazy"/>` : ''}
       <div class="post-body">${post.body || ''}</div>
 
       <div class="reaction-bar">
         <span class="reaction-bar-q">Did this resonate?</span>
-        <button class="reaction-big" id="like-btn" onclick="reactToPost('${id}','like')">
+        <button class="reaction-big" id="like-btn" onclick="reactToPost('${postId}','like')">
           👍 Loved it <span class="reaction-count" id="like-count">${likes}</span>
         </button>
-        <button class="reaction-big" id="hate-btn" onclick="reactToPost('${id}','hate')">
+        <button class="reaction-big" id="hate-btn" onclick="reactToPost('${postId}','hate')">
           👎 Disagree <span class="reaction-count" id="hate-count">${hates}</span>
         </button>
       </div>
@@ -217,7 +230,7 @@ export async function loadPost() {
           <input class="comment-form-name" id="comment-name" placeholder="Your name…" maxlength="60"/>
           <textarea class="comment-form-body" id="comment-body" placeholder="What are your thoughts?"></textarea>
           <div class="comment-form-footer">
-            <button class="btn-submit" id="comment-submit" onclick="submitComment('${id}')">Post comment</button>
+            <button class="btn-submit" id="comment-submit" onclick="submitComment('${postId}')">Post comment</button>
           </div>
         </div>
         <div id="comments-list">
@@ -226,12 +239,19 @@ export async function loadPost() {
       </div>
     </div>`
 
-  // Tags
-  if (post.tags?.length) {
-    const tagsHtml = `<div style="margin-top:32px;display:flex;gap:8px;flex-wrap:wrap">
-      ${post.tags.map(t => `<span class="hero-tag">${t}</span>`).join('')}
-    </div>`
-    wrap.querySelector('.post-body').insertAdjacentHTML('afterend', tagsHtml)
+    // Tags
+    if (post.tags?.length) {
+      const tagsHtml = `<div style="margin-top:32px;display:flex;gap:8px;flex-wrap:wrap">
+        ${post.tags.map(t => `<span class="hero-tag">${escapeHtml(t)}</span>`).join('')}
+      </div>`
+      wrap.querySelector('.post-body').insertAdjacentHTML('afterend', tagsHtml)
+    }
+
+    // Bump view count in background (must not block page render)
+    supabase.rpc('increment_views', { post_id: postId }).then(() => {}).catch(() => {})
+  } catch (err) {
+    console.error('loadPost error:', err)
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Could not load this post. Please try again.</div></div>'
   }
 }
 

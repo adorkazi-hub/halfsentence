@@ -56,6 +56,9 @@ create policy "Admin full access to posts"
   using (true)
   with check (true);
 
+-- ── VIEW COUNTER · allow public RPC ─────────────────────
+grant execute on function public.increment_views(uuid) to anon, authenticated;
+
 -- ── STORAGE · allow authenticated updates (replace cover) ─
 drop policy if exists "Admin can update covers" on storage.objects;
 create policy "Admin can update covers"
