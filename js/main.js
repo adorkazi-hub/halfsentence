@@ -211,24 +211,9 @@ export async function loadPost() {
       </div>
      ${post.cover_url ? `<img class="post-cover" src="${escapeHtml(post.cover_url)}" alt="${escapeHtml(post.title)}" loading="lazy"/>` : ''}
 ${isFullHtml(post.body)
-  ? `<div class="post-html-wrap">
-       <iframe
-         srcdoc="${(post.body || '').replace(/"/g, '&quot;')}"
-         style="width:100%;border:none;min-height:100vh"
-         sandbox="allow-same-origin allow-scripts"
-         id="post-html-frame"
-       ></iframe>
-       <script>
-         // Auto-resize iframe to content height
-         document.getElementById('post-html-frame').onload = function() {
-           try {
-             this.style.height = this.contentDocument.body.scrollHeight + 'px'
-           } catch(e) {}
-         }
-       </script>
-     </div>`
-  : `<div class="post-body">${post.body || ''}</div>`
-}
+        ? `<div class="post-html-wrap" id="html-post-wrap"></div>`
+        : `<div class="post-body">${post.body || ''}</div>`
+      }
 
       <div class="reaction-bar">
         <span class="reaction-bar-q">Did this resonate?</span>
@@ -256,6 +241,26 @@ ${isFullHtml(post.body)
         </div>
       </div>
     </div>`
+
+    // Render full HTML post safely via blob URL
+    if (isFullHtml(post.body)) {
+      const wrap = document.getElementById('html-post-wrap')
+      if (wrap) {
+        const blob = new Blob([post.body], { type: 'text/html' })
+        const url  = URL.createObjectURL(blob)
+        const iframe = document.createElement('iframe')
+        iframe.src = url
+        iframe.style.cssText = 'width:100%;border:none;min-height:100vh;display:block'
+        iframe.sandbox = 'allow-same-origin allow-scripts'
+        iframe.onload = function() {
+          try {
+            this.style.height = this.contentDocument.body.scrollHeight + 30 + 'px'
+          } catch(e) {}
+          URL.revokeObjectURL(url)
+        }
+        wrap.appendChild(iframe)
+      }
+    }
 
     // Tags
     if (post.tags?.length) {
@@ -424,13 +429,6 @@ function timeAgo(iso) {
   return Math.floor(m / 1440) + 'd ago'
 }
 
-// Detect if post body is a full HTML document
-function isFullHtml(body) {
-  if (!body) return false
-  const trimmed = body.trim().toLowerCase()
-  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')
-}
-
 // ── ABOUT PAGE (from site_settings) ──────────────────────
 export async function loadAboutPage() {
   const nameEl = document.getElementById('about-name')
@@ -479,4 +477,11 @@ function escapeAttr(str) {
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
+}
+
+// Detect if post body is a full HTML document
+function isFullHtml(body) {
+  if (!body) return false
+  const trimmed = body.trim().toLowerCase()
+  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')
 }
