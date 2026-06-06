@@ -1,6 +1,5 @@
 // ═══════════════════════════════════════════════
 //  halfsentence · main.js
-//  Public site logic + Supabase data fetching
 // ═══════════════════════════════════════════════
 
 import { supabase } from './supabase.js'
@@ -25,153 +24,188 @@ export function readTime(body) {
 }
 
 function spinner() {
-  return '<div class="spinner"></div><div class="loading-text">Loading…</div>'
+  return '<div class="spinner"></div>'
 }
 
 function escapeHtml(str) {
   return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
 function escapeAttr(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 }
 
 function avatarColor(name) {
-  const colors = ['#6B9E7A','#7A8AAE','#C47A6B','#9B7CC0','#A07AB5','#8AAD82','#6BA3AE']
-  let h = 0; for (let c of (name||'')) h = c.charCodeAt(0) + ((h << 5) - h)
+  const colors = ['#A07890','#7A8AAE','#8AAD82','#C47A6B','#9B7CC0','#A07AB5','#6BA3AE']
+  let h = 0; for (let c of (name || '')) h = c.charCodeAt(0) + ((h << 5) - h)
   return colors[Math.abs(h) % colors.length]
 }
 
-// Detect if post body is a full standalone HTML document
 function isFullHtml(body) {
   if (!body) return false
-  const trimmed = body.trim().toLowerCase()
-  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')
+  const t = body.trim().toLowerCase()
+  return t.startsWith('<!doctype') || t.startsWith('<html')
 }
 
-// Open full HTML post in a new tab via blob URL
 window.openHtmlPost = function() {
   const html = window._htmlPostBody
   if (!html) return
   const blob = new Blob([html], { type: 'text/html' })
-  const url  = URL.createObjectURL(blob)
-  window.open(url, '_blank')
+  window.location.href = URL.createObjectURL(blob)
+}
+
+// ── Category helpers ──────────────────────────────────────
+function catClass(category) {
+  const c = (category || '').toLowerCase()
+  if (c.includes('phil'))                        return 'cat-philosophy'
+  if (c.includes('book') || c.includes('read')) return 'cat-books'
+  if (c.includes('cult'))                        return 'cat-culture'
+  if (c.includes('pers'))                        return 'cat-personal'
+  if (c.includes('tech'))                        return 'cat-technology'
+  return 'cat-default'
+}
+
+function catIcon(category) {
+  const c = (category || '').toLowerCase()
+  if (c.includes('phil')) return `
+    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="26" cy="26" r="14" stroke="#7060A8" stroke-width="1.5" opacity="0.4"/>
+      <circle cx="26" cy="26" r="8"  stroke="#7060A8" stroke-width="1.5" opacity="0.6"/>
+      <circle cx="26" cy="26" r="2.5" fill="#7060A8" opacity="0.8"/>
+      <line x1="26" y1="8"  x2="26" y2="12" stroke="#7060A8" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+      <line x1="26" y1="40" x2="26" y2="44" stroke="#7060A8" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+      <line x1="8"  y1="26" x2="12" y2="26" stroke="#7060A8" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+      <line x1="40" y1="26" x2="44" y2="26" stroke="#7060A8" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+    </svg>`
+  if (c.includes('book') || c.includes('read')) return `
+    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="10" width="18" height="30" rx="2" stroke="#2A6A8A" stroke-width="1.5" opacity="0.5"/>
+      <rect x="22" y="10" width="18" height="30" rx="2" stroke="#2A6A8A" stroke-width="1.5" opacity="0.3"/>
+      <line x1="14" y1="18" x2="24" y2="18" stroke="#2A6A8A" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+      <line x1="14" y1="22" x2="24" y2="22" stroke="#2A6A8A" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+      <line x1="14" y1="26" x2="20" y2="26" stroke="#2A6A8A" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+    </svg>`
+  if (c.includes('cult')) return `
+    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 10 L40 36 L12 36 Z" stroke="#8A5A2A" stroke-width="1.5" stroke-linejoin="round" opacity="0.45"/>
+      <path d="M26 18 L36 36 L16 36 Z" stroke="#8A5A2A" stroke-width="1.2" stroke-linejoin="round" opacity="0.28"/>
+      <circle cx="26" cy="10" r="2" fill="#8A5A2A" opacity="0.5"/>
+    </svg>`
+  if (c.includes('pers')) return `
+    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 12 C26 12 15 21 15 30 C15 36.1 20 41 26 41 C32 41 37 36.1 37 30 C37 21 26 12 26 12Z" stroke="#2A6A4A" stroke-width="1.5" opacity="0.45"/>
+      <path d="M26 20 C26 20 19 26 19 31 C19 34.5 22.1 37.5 26 37.5" stroke="#2A6A4A" stroke-width="1.2" stroke-linecap="round" opacity="0.35"/>
+    </svg>`
+  if (c.includes('tech')) return `
+    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="10" y="16" width="32" height="22" rx="2" stroke="#6A5A3A" stroke-width="1.5" opacity="0.45"/>
+      <line x1="17" y1="38" x2="35" y2="38" stroke="#6A5A3A" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+      <line x1="26" y1="38" x2="26" y2="42" stroke="#6A5A3A" stroke-width="1.5" stroke-linecap="round" opacity="0.3"/>
+      <circle cx="26" cy="27" r="4.5" stroke="#6A5A3A" stroke-width="1.2" opacity="0.45"/>
+      <circle cx="26" cy="27" r="1.5" fill="#6A5A3A" opacity="0.5"/>
+    </svg>`
+  return `
+    <svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="12" y="14" width="28" height="26" rx="3" stroke="#7A6A7A" stroke-width="1.5" opacity="0.4"/>
+      <line x1="18" y1="22" x2="34" y2="22" stroke="#7A6A7A" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+      <line x1="18" y1="27" x2="34" y2="27" stroke="#7A6A7A" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+      <line x1="18" y1="32" x2="26" y2="32" stroke="#7A6A7A" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+    </svg>`
+}
+
+// ── CURRENTLY READING ────────────────────────────────────
+export async function loadCurrentlyReading() {
+  const { data, error } = await supabase
+    .from('site_settings')
+    .select('currently_reading_book, currently_reading_author, currently_reading_quote, currently_reading_progress')
+    .eq('id', 1)
+    .maybeSingle()
+
+  if (error || !data) {
+    setTimeout(() => {
+      const bar = document.getElementById('rc-bar-fill')
+      if (bar) bar.style.width = '34%'
+    }, 500)
+    return
+  }
+
+  const titleEl  = document.getElementById('rc-book-title')
+  const authorEl = document.getElementById('rc-book-author')
+  const quoteEl  = document.getElementById('rc-quote')
+  const attrEl   = document.getElementById('rc-attr')
+  const pctEl    = document.getElementById('rc-pct')
+  const barEl    = document.getElementById('rc-bar-fill')
+
+  if (titleEl  && data.currently_reading_book)   titleEl.textContent  = data.currently_reading_book
+  if (authorEl && data.currently_reading_author) authorEl.textContent = data.currently_reading_author
+  if (quoteEl  && data.currently_reading_quote)  quoteEl.textContent  = '"' + data.currently_reading_quote + '"'
+  if (attrEl   && data.currently_reading_author) attrEl.textContent   = '— ' + data.currently_reading_author
+  if (pctEl)   pctEl.textContent = (data.currently_reading_progress || 0) + '%'
+
+  setTimeout(() => {
+    if (barEl) barEl.style.width = (data.currently_reading_progress || 0) + '%'
+  }, 500)
 }
 
 // ── HOME PAGE ────────────────────────────────────────────
 export async function loadHome() {
-  const featuredWrap = document.getElementById('featured-wrap')
-  const postsWrap    = document.getElementById('posts-wrap')
-  if (!featuredWrap && !postsWrap) return
-
-  if (featuredWrap) featuredWrap.innerHTML = spinner()
-  if (postsWrap)    postsWrap.innerHTML    = spinner()
+  const postsWrap = document.getElementById('posts-wrap')
+  if (!postsWrap) return
+  postsWrap.innerHTML = spinner()
 
   const { data: posts, error } = await supabase
     .from('posts')
     .select('id, title, excerpt, cover_url, category, tags, views, created_at')
     .eq('status', 'published')
     .order('created_at', { ascending: false })
-    .limit(10)
+    .limit(12)
 
   if (error) { console.error(error); return }
+
   if (!posts || posts.length === 0) {
-    if (featuredWrap) featuredWrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✍️</div><div class="empty-state-text">No posts yet. Check back soon.</div></div>'
-    if (postsWrap)    postsWrap.innerHTML    = ''
+    postsWrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✍️</div><div class="empty-state-text">No posts yet. Check back soon.</div></div>'
     return
   }
 
-  // Fetch reaction counts
   const ids = posts.map(p => p.id)
-  const { data: reactions } = await supabase
-    .from('reactions')
-    .select('post_id, type')
-    .in('post_id', ids)
-
-  const { data: comments } = await supabase
-    .from('comments')
-    .select('post_id')
-    .in('post_id', ids)
-    .eq('status', 'approved')
+  const { data: reactions } = await supabase.from('reactions').select('post_id, type').in('post_id', ids)
+  const { data: comments  } = await supabase.from('comments').select('post_id').in('post_id', ids).eq('status', 'approved')
 
   const likesMap = {}, hatesMap = {}, commentsMap = {}
   ids.forEach(id => { likesMap[id] = 0; hatesMap[id] = 0; commentsMap[id] = 0 })
   reactions?.forEach(r => { if (r.type === 'like') likesMap[r.post_id]++; else hatesMap[r.post_id]++ })
   comments?.forEach(c => { commentsMap[c.post_id]++ })
 
-  // Featured post
-  const featured = posts[0]
-  if (featuredWrap) {
-    featuredWrap.innerHTML = `
-      <div class="feat-main fade-up" onclick="window.location.href='post.html?id=${featured.id}'">
-        ${featured.cover_url
-          ? `<img class="feat-cover" src="${featured.cover_url}" alt="${featured.title}" loading="lazy"/>`
-          : `<div class="feat-cover-placeholder">📖</div>`}
-        <div class="feat-body">
-          <span class="feat-badge">${featured.category || 'Essay'}</span>
-          <div class="feat-title">${featured.title}</div>
-          <div class="feat-excerpt">${featured.excerpt || ''}</div>
-          <div class="feat-footer">
-            <div class="react-chip" onclick="event.stopPropagation();handleReact('${featured.id}','like',this)">
-              👍 <span>${likesMap[featured.id]}</span>
-            </div>
-            <div class="react-chip" onclick="event.stopPropagation();handleReact('${featured.id}','hate',this)">
-              👎 <span>${hatesMap[featured.id]}</span>
-            </div>
-            <div class="react-chip">💬 ${commentsMap[featured.id]}</div>
-            <span class="feat-read">${readTime(featured.excerpt)} · ${formatDate(featured.created_at)}</span>
-          </div>
+  postsWrap.innerHTML = posts.map(p => {
+    const cc   = catClass(p.category)
+    const icon = catIcon(p.category)
+    const coverHtml = p.cover_url
+      ? `<img src="${escapeHtml(p.cover_url)}" alt="${escapeHtml(p.title)}"/>`
+      : icon
+
+    return `
+    <div class="post-card fade-up" onclick="window.location.href='post.html?id=${p.id}'">
+      <div class="post-card-cover ${cc}">
+        <div class="post-card-cover-label">${escapeHtml(p.category || '')}</div>
+        ${coverHtml}
+      </div>
+      <div class="post-card-body">
+        <div class="post-card-top">
+          <span class="post-card-cat">${escapeHtml(p.category || 'Essay')}</span>
+          <span class="post-card-date">${formatDate(p.created_at)}</span>
+        </div>
+        <div class="post-card-title">${escapeHtml(p.title)}</div>
+        <div class="post-card-excerpt">${escapeHtml(p.excerpt || '')}</div>
+        <div class="post-card-footer">
+          <span class="post-card-stat">👍 ${likesMap[p.id]}</span>
+          <span class="post-card-stat">💬 ${commentsMap[p.id]}</span>
+          <span class="post-card-time">${readTime(p.excerpt)}</span>
         </div>
       </div>
-      <div class="feat-side">
-        ${posts.slice(1, 4).map(p => `
-          <div class="side-card" onclick="window.location.href='post.html?id=${p.id}'">
-            <div class="side-card-img">
-              ${p.cover_url ? `<img src="${p.cover_url}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover"/>` : '📝'}
-            </div>
-            <div class="side-card-body">
-              <span class="side-card-cat">${p.category || ''}</span>
-              <div class="side-card-title">${p.title}</div>
-              <div class="side-card-meta">
-                <span>👍 ${likesMap[p.id]}</span>
-                <span>💬 ${commentsMap[p.id]}</span>
-                <span>${readTime(p.excerpt)}</span>
-              </div>
-            </div>
-          </div>`).join('')}
-      </div>`
-  }
-
-  // Rest of posts grid
-  if (postsWrap) {
-    postsWrap.innerHTML = posts.slice(4).map(p => `
-      <div class="post-card fade-up" onclick="window.location.href='post.html?id=${p.id}'">
-        <div class="post-card-cover">
-          ${p.cover_url ? `<img src="${p.cover_url}" alt="${p.title}" style="width:100%;height:100%;object-fit:cover"/>` : '📝'}
-        </div>
-        <div class="post-card-body">
-          <div class="post-card-top">
-            <span class="post-card-cat">${p.category || ''}</span>
-            <span class="post-card-date">${formatDate(p.created_at)}</span>
-          </div>
-          <div class="post-card-title">${p.title}</div>
-          <div class="post-card-excerpt">${p.excerpt || ''}</div>
-          <div class="post-card-footer">
-            <span class="post-card-stat">👍 ${likesMap[p.id]}</span>
-            <span class="post-card-stat">👎 ${hatesMap[p.id]}</span>
-            <span class="post-card-stat">💬 ${commentsMap[p.id]}</span>
-            <span class="post-card-time">${readTime(p.excerpt)}</span>
-          </div>
-        </div>
-      </div>`).join('')
-  }
+    </div>`
+  }).join('')
 }
 
 // ── SINGLE POST ──────────────────────────────────────────
@@ -204,22 +238,17 @@ export async function loadPost() {
     const postId   = post.id
     const htmlPost = isFullHtml(post.body)
 
-    // Reactions
     const { data: reactions } = await supabase.from('reactions').select('type').eq('post_id', postId)
     const likes = reactions?.filter(r => r.type === 'like').length || 0
     const hates = reactions?.filter(r => r.type === 'hate').length || 0
 
-    // Comments
     const { data: comments } = await supabase
-      .from('comments')
-      .select('*')
-      .eq('post_id', postId)
-      .eq('status', 'approved')
+      .from('comments').select('*')
+      .eq('post_id', postId).eq('status', 'approved')
       .order('created_at', { ascending: true })
 
     document.title = escapeHtml(post.title) + ' · halfsentence'
 
-    // ── Build page HTML ──
     wrap.innerHTML = `
     <div class="post-page fade-up">
       <button class="post-back" onclick="window.location.href='index.html'">← All posts</button>
@@ -234,19 +263,9 @@ export async function loadPost() {
         <span class="post-byline-dot">·</span>
         <span>${post.views || 0} views</span>
       </div>
-      ${post.cover_url ? `<img class="post-cover" src="${escapeHtml(post.cover_url)}" alt="${escapeHtml(post.title)}" loading="lazy"/>` : ''}
 
       ${htmlPost
-        ? `<div class="post-html-wrap" id="html-post-wrap">
-            <div style="text-align:center;padding:60px 20px;background:var(--snow);border-radius:12px;border:1px solid var(--border)">
-              <div style="font-size:48px;margin-bottom:16px">🎨</div>
-              <div style="font-family:'Lora',serif;font-size:22px;font-weight:600;margin-bottom:10px;color:var(--ink)">This post has a custom design</div>
-              <div style="font-size:15px;color:var(--ink-m);margin-bottom:28px;font-family:'Crimson Pro',serif">Click below to read it in full — it opens in a new tab</div>
-              <button onclick="openHtmlPost()" style="background:#5E7856;color:white;border:none;padding:14px 32px;border-radius:99px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s" onmouseover="this.style.background='#3F5439'" onmouseout="this.style.background='#5E7856'">
-                Open Post →
-              </button>
-            </div>
-          </div>`
+        ? `<div class="post-html-wrap" id="html-post-wrap"></div>`
         : `<div class="post-body">${post.body || ''}</div>`
       }
 
@@ -271,27 +290,25 @@ export async function loadPost() {
             <button class="btn-submit" id="comment-submit" onclick="submitComment('${postId}')">Post comment</button>
           </div>
         </div>
-        <div id="comments-list">
-          ${renderComments(comments || [])}
-        </div>
+        <div id="comments-list">${renderComments(comments || [])}</div>
       </div>
     </div>`
 
-    // Store HTML body for blob open
     if (htmlPost) {
       window._htmlPostBody = post.body
+      const blob = new Blob([post.body], { type: 'text/html' })
+      window.location.href = URL.createObjectURL(blob)
+      return
     }
 
-    // Tags
     if (post.tags?.length) {
-      const tagsHtml = `<div style="margin-top:32px;display:flex;gap:8px;flex-wrap:wrap">
-        ${post.tags.map(t => `<span class="hero-tag">${escapeHtml(t)}</span>`).join('')}
+      const tagsHtml = `<div style="margin-top:28px;display:flex;gap:8px;flex-wrap:wrap">
+        ${post.tags.map(t => `<span style="font-size:12px;padding:4px 12px;border-radius:99px;border:1px solid var(--border);color:var(--ink-l)">${escapeHtml(t)}</span>`).join('')}
       </div>`
       const tagsTarget = wrap.querySelector('.post-body') || wrap.querySelector('.post-html-wrap')
       if (tagsTarget) tagsTarget.insertAdjacentHTML('afterend', tagsHtml)
     }
 
-    // Bump view count in background
     supabase.rpc('increment_views', { post_id: postId }).then(() => {}).catch(() => {})
 
   } catch (err) {
@@ -303,15 +320,15 @@ export async function loadPost() {
 function renderComments(comments) {
   if (!comments.length) return '<div class="empty-state" style="padding:30px 0"><div class="empty-state-text">No comments yet. Be the first!</div></div>'
   return comments.map(c => `
-    <div class="comment-item" id="comment-${c.id}">
+    <div class="comment-item">
       <div class="comment-head">
         <div class="comment-avatar" style="background:${avatarColor(c.author)}">${(c.author || '?')[0].toUpperCase()}</div>
         <div>
-          <div class="comment-name">${c.author || 'Anonymous'}</div>
+          <div class="comment-name">${escapeHtml(c.author || 'Anonymous')}</div>
           <div class="comment-date">${formatDate(c.created_at)}</div>
         </div>
       </div>
-      <div class="comment-text">${c.body}</div>
+      <div class="comment-text">${escapeHtml(c.body)}</div>
     </div>`).join('')
 }
 
@@ -324,14 +341,10 @@ export async function reactToPost(postId, type) {
       .eq('post_id', postId).eq('type', type).eq('session_id', getSession())
     userReacted = null
   } else {
-    if (userReacted) {
-      await supabase.from('reactions').delete()
-        .eq('post_id', postId).eq('session_id', getSession())
-    }
+    if (userReacted) await supabase.from('reactions').delete().eq('post_id', postId).eq('session_id', getSession())
     await supabase.from('reactions').insert({ post_id: postId, type, session_id: getSession() })
     userReacted = type
   }
-
   const { data: reactions } = await supabase.from('reactions').select('type').eq('post_id', postId)
   const likes = reactions?.filter(r => r.type === 'like').length || 0
   const hates = reactions?.filter(r => r.type === 'hate').length || 0
@@ -342,13 +355,7 @@ export async function reactToPost(postId, type) {
   toast(type === 'like' ? '👍 Thanks!' : '👎 Noted!')
 }
 
-window.handleReact = async (postId, type, el) => {
-  const span = el.querySelector('span')
-  await supabase.from('reactions').insert({ post_id: postId, type, session_id: getSession() })
-  span.textContent = parseInt(span.textContent) + 1
-  el.style.borderColor = type === 'like' ? '#7dbf8e' : '#c0886e'
-  toast(type === 'like' ? '👍 Liked!' : '👎 Noted!')
-}
+window.reactToPost = reactToPost
 
 function getSession() {
   let s = localStorage.getItem('hs_session')
@@ -364,21 +371,14 @@ export async function submitComment(postId) {
   if (!name || !body) { toast('⚠️ Enter your name and comment'); return }
 
   btn.disabled = true; btn.textContent = 'Posting…'
-
-  const { error } = await supabase.from('comments').insert({
-    post_id: postId, author: name, body, status: 'pending'
-  })
-
+  const { error } = await supabase.from('comments').insert({ post_id: postId, author: name, body, status: 'pending' })
   btn.disabled = false; btn.textContent = 'Post comment'
 
-  if (error) { toast('❌ Something went wrong. Try again.'); console.error(error); return }
-
+  if (error) { toast('❌ Something went wrong.'); return }
   document.getElementById('comment-name').value = ''
   document.getElementById('comment-body').value = ''
   toast('✅ Comment submitted! It will appear after review.')
 }
-
-window.reactToPost   = reactToPost
 window.submitComment = submitComment
 
 // ── READERS CORNER ───────────────────────────────────────
@@ -388,9 +388,7 @@ export async function loadReadersCorner() {
   feed.innerHTML = spinner()
 
   const { data: posts, error } = await supabase
-    .from('readers_posts')
-    .select('*')
-    .order('votes', { ascending: false })
+    .from('readers_posts').select('*').order('votes', { ascending: false })
 
   if (error) { console.error(error); return }
   if (!posts?.length) {
@@ -410,13 +408,12 @@ export async function loadReadersCorner() {
       </div>
       <div class="reader-main">
         <span class="reader-flair ${flairClass[p.type] || 'flair-discuss'}">${flairLabel[p.type] || p.type}</span>
-        <div class="reader-title">${p.title}</div>
-        <div class="reader-preview">${(p.body || '').substring(0, 180)}${p.body?.length > 180 ? '…' : ''}</div>
+        <div class="reader-title">${escapeHtml(p.title)}</div>
+        <div class="reader-preview">${escapeHtml((p.body || '').substring(0, 180))}${(p.body || '').length > 180 ? '…' : ''}</div>
         <div class="reader-meta">
-          <span>by ${p.author || 'Anonymous'}</span>
-          <span>·</span>
-          <span>${timeAgo(p.created_at)}</span>
-          ${p.book_title ? `<span>·</span><span>📖 ${p.book_title}</span>` : ''}
+          <span>by ${escapeHtml(p.author || 'Anonymous')}</span>
+          <span>·</span><span>${timeAgo(p.created_at)}</span>
+          ${p.book_title ? `<span>·</span><span>📖 ${escapeHtml(p.book_title)}</span>` : ''}
         </div>
       </div>
     </div>`).join('')
@@ -428,19 +425,18 @@ window.votePost = async (id, delta, btn) => {
   await supabase.from('readers_posts').update({ votes: newV }).eq('id', id)
   el.textContent = newV
   el.style.color = delta > 0 ? '#3d7a50' : 'var(--rose)'
-  setTimeout(() => el.style.color = 'var(--sage)', 700)
+  setTimeout(() => el.style.color = 'var(--rose)', 700)
 }
 
 export async function submitReadersPost(data) {
   const { error } = await supabase.from('readers_posts').insert(data)
-  if (error) { toast('❌ Could not submit. Try again.'); console.error(error); return false }
+  if (error) { toast('❌ Could not submit. Try again.'); return false }
   toast('✅ Post submitted!')
   return true
 }
 
 function timeAgo(iso) {
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff / 60000)
+  const m = Math.floor((Date.now() - new Date(iso)) / 60000)
   if (m < 60)   return m + 'm ago'
   if (m < 1440) return Math.floor(m / 60) + 'h ago'
   return Math.floor(m / 1440) + 'd ago'
@@ -452,12 +448,7 @@ export async function loadAboutPage() {
   if (!nameEl) return
 
   const { data, error } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle()
-  if (error) {
-    console.error(error)
-    const body = document.getElementById('about-body')
-    if (body) body.innerHTML = '<p>Could not load About page. Run supabase-patch.sql in your Supabase project.</p>'
-    return
-  }
+  if (error) { console.error(error); return }
   if (!data) return
 
   const name   = data.author_name || data.site_name || 'halfsentence'
@@ -474,14 +465,10 @@ export async function loadAboutPage() {
   const linksEl = document.getElementById('about-links')
   if (linksEl) {
     const links = []
-    if (data.author_email)
-      links.push(`<a class="about-link" href="mailto:${escapeAttr(data.author_email)}">✉ Email</a>`)
-    if (data.link_twitter)
-      links.push(`<a class="about-link" href="${escapeAttr(data.link_twitter)}" target="_blank" rel="noopener">𝕏 Twitter</a>`)
-    if (data.link_goodreads)
-      links.push(`<a class="about-link" href="${escapeAttr(data.link_goodreads)}" target="_blank" rel="noopener">📚 Goodreads</a>`)
-    if (data.link_newsletter)
-      links.push(`<a class="about-link" href="${escapeAttr(data.link_newsletter)}" target="_blank" rel="noopener">📰 Newsletter</a>`)
+    if (data.author_email)    links.push(`<a class="about-link" href="mailto:${escapeAttr(data.author_email)}">✉ Email</a>`)
+    if (data.link_twitter)    links.push(`<a class="about-link" href="${escapeAttr(data.link_twitter)}" target="_blank" rel="noopener">𝕏 Twitter</a>`)
+    if (data.link_goodreads)  links.push(`<a class="about-link" href="${escapeAttr(data.link_goodreads)}" target="_blank" rel="noopener">📚 Goodreads</a>`)
+    if (data.link_newsletter) links.push(`<a class="about-link" href="${escapeAttr(data.link_newsletter)}" target="_blank" rel="noopener">📰 Newsletter</a>`)
     linksEl.innerHTML = links.join('')
   }
 
