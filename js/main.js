@@ -36,10 +36,33 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
 }
 
+function escapeAttr(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+}
+
 function avatarColor(name) {
   const colors = ['#6B9E7A','#7A8AAE','#C47A6B','#9B7CC0','#A07AB5','#8AAD82','#6BA3AE']
   let h = 0; for (let c of (name||'')) h = c.charCodeAt(0) + ((h << 5) - h)
   return colors[Math.abs(h) % colors.length]
+}
+
+// Detect if post body is a full standalone HTML document
+function isFullHtml(body) {
+  if (!body) return false
+  const trimmed = body.trim().toLowerCase()
+  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')
+}
+
+// Open full HTML post in a new tab via blob URL
+window.openHtmlPost = function() {
+  const html = window._htmlPostBody
+  if (!html) return
+  const blob = new Blob([html], { type: 'text/html' })
+  const url  = URL.createObjectURL(blob)
+  window.open(url, '_blank')
 }
 
 // ── HOME PAGE ────────────────────────────────────────────
@@ -78,7 +101,7 @@ export async function loadHome() {
     .in('post_id', ids)
     .eq('status', 'approved')
 
-  const likesMap    = {}, hatesMap = {}, commentsMap = {}
+  const likesMap = {}, hatesMap = {}, commentsMap = {}
   ids.forEach(id => { likesMap[id] = 0; hatesMap[id] = 0; commentsMap[id] = 0 })
   reactions?.forEach(r => { if (r.type === 'like') likesMap[r.post_id]++; else hatesMap[r.post_id]++ })
   comments?.forEach(c => { commentsMap[c.post_id]++ })
@@ -169,7 +192,7 @@ export async function loadPost() {
   try {
     let query = supabase.from('posts').select('*').eq('status', 'published')
     if (id) query = query.eq('id', id)
-    else query = query.eq('slug', slug)
+    else    query = query.eq('slug', slug)
 
     const { data: post, error } = await query.single()
 
@@ -178,7 +201,8 @@ export async function loadPost() {
       return
     }
 
-    const postId = post.id
+    const postId   = post.id
+    const htmlPost = isFullHtml(post.body)
 
     // Reactions
     const { data: reactions } = await supabase.from('reactions').select('type').eq('post_id', postId)
@@ -195,6 +219,7 @@ export async function loadPost() {
 
     document.title = escapeHtml(post.title) + ' · halfsentence'
 
+    // ── Build page HTML ──
     wrap.innerHTML = `
     <div class="post-page fade-up">
       <button class="post-back" onclick="window.location.href='index.html'">← All posts</button>
@@ -209,9 +234,19 @@ export async function loadPost() {
         <span class="post-byline-dot">·</span>
         <span>${post.views || 0} views</span>
       </div>
-     ${post.cover_url ? `<img class="post-cover" src="${escapeHtml(post.cover_url)}" alt="${escapeHtml(post.title)}" loading="lazy"/>` : ''}
-${isFullHtml(post.body)
-        ? `<div class="post-html-wrap" id="html-post-wrap"></div>`
+      ${post.cover_url ? `<img class="post-cover" src="${escapeHtml(post.cover_url)}" alt="${escapeHtml(post.title)}" loading="lazy"/>` : ''}
+
+      ${htmlPost
+        ? `<div class="post-html-wrap" id="html-post-wrap">
+            <div style="text-align:center;padding:60px 20px;background:var(--snow);border-radius:12px;border:1px solid var(--border)">
+              <div style="font-size:48px;margin-bottom:16px">🎨</div>
+              <div style="font-family:'Lora',serif;font-size:22px;font-weight:600;margin-bottom:10px;color:var(--ink)">This post has a custom design</div>
+              <div style="font-size:15px;color:var(--ink-m);margin-bottom:28px;font-family:'Crimson Pro',serif">Click below to read it in full — it opens in a new tab</div>
+              <button onclick="openHtmlPost()" style="background:#5E7856;color:white;border:none;padding:14px 32px;border-radius:99px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s" onmouseover="this.style.background='#3F5439'" onmouseout="this.style.background='#5E7856'">
+                Open Post →
+              </button>
+            </div>
+          </div>`
         : `<div class="post-body">${post.body || ''}</div>`
       }
 
@@ -242,38 +277,12 @@ ${isFullHtml(post.body)
       </div>
     </div>`
 
-// Render full HTML post safely via blob URL
-if (isFullHtml(post.body)) {
-      const htmlWrap = document.getElementById('html-post-wrap')
-      if (htmlWrap) {
-        const blob = new Blob([post.body], { type: 'text/html' })
-        const url  = URL.createObjectURL(blob)
-        const iframe = document.createElement('iframe')
-        iframe.src = url
-        iframe.style.cssText = 'width:100%;border:none;display:block'
-        iframe.sandbox = 'allow-same-origin allow-scripts'
-        iframe.scrolling = 'no'
-
-        iframe.onload = function() {
-          try {
-            const h = this.contentDocument.documentElement.scrollHeight
-              || this.contentDocument.body.scrollHeight
-            this.style.height = (h + 50) + 'px'
-          } catch(e) {
-            this.style.height = '5000px'
-          }
-          URL.revokeObjectURL(url)
-        }
-
-        setTimeout(() => {
-          if (iframe.style.height === '') iframe.style.height = '5000px'
-        }, 3000)
-
-        htmlWrap.appendChild(iframe)
-      }
+    // Store HTML body for blob open
+    if (htmlPost) {
+      window._htmlPostBody = post.body
     }
-  
-   // Tags
+
+    // Tags
     if (post.tags?.length) {
       const tagsHtml = `<div style="margin-top:32px;display:flex;gap:8px;flex-wrap:wrap">
         ${post.tags.map(t => `<span class="hero-tag">${escapeHtml(t)}</span>`).join('')}
@@ -282,8 +291,9 @@ if (isFullHtml(post.body)) {
       if (tagsTarget) tagsTarget.insertAdjacentHTML('afterend', tagsHtml)
     }
 
-    // Bump view count in background (must not block page render)
+    // Bump view count in background
     supabase.rpc('increment_views', { post_id: postId }).then(() => {}).catch(() => {})
+
   } catch (err) {
     console.error('loadPost error:', err)
     wrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Could not load this post. Please try again.</div></div>'
@@ -310,12 +320,10 @@ let userReacted = null
 
 export async function reactToPost(postId, type) {
   if (userReacted === type) {
-    // Remove reaction
     await supabase.from('reactions').delete()
       .eq('post_id', postId).eq('type', type).eq('session_id', getSession())
     userReacted = null
   } else {
-    // Remove opposite if exists
     if (userReacted) {
       await supabase.from('reactions').delete()
         .eq('post_id', postId).eq('session_id', getSession())
@@ -324,7 +332,6 @@ export async function reactToPost(postId, type) {
     userReacted = type
   }
 
-  // Refresh counts
   const { data: reactions } = await supabase.from('reactions').select('type').eq('post_id', postId)
   const likes = reactions?.filter(r => r.type === 'like').length || 0
   const hates = reactions?.filter(r => r.type === 'hate').length || 0
@@ -335,7 +342,6 @@ export async function reactToPost(postId, type) {
   toast(type === 'like' ? '👍 Thanks!' : '👎 Noted!')
 }
 
-// Handle react on card (home page)
 window.handleReact = async (postId, type, el) => {
   const span = el.querySelector('span')
   await supabase.from('reactions').insert({ post_id: postId, type, session_id: getSession() })
@@ -352,9 +358,9 @@ function getSession() {
 
 // ── COMMENTS ────────────────────────────────────────────
 export async function submitComment(postId) {
-  const name  = document.getElementById('comment-name')?.value.trim()
-  const body  = document.getElementById('comment-body')?.value.trim()
-  const btn   = document.getElementById('comment-submit')
+  const name = document.getElementById('comment-name')?.value.trim()
+  const body = document.getElementById('comment-body')?.value.trim()
+  const btn  = document.getElementById('comment-submit')
   if (!name || !body) { toast('⚠️ Enter your name and comment'); return }
 
   btn.disabled = true; btn.textContent = 'Posting…'
@@ -372,7 +378,6 @@ export async function submitComment(postId) {
   toast('✅ Comment submitted! It will appear after review.')
 }
 
-// Make functions global so onclick works
 window.reactToPost   = reactToPost
 window.submitComment = submitComment
 
@@ -441,7 +446,7 @@ function timeAgo(iso) {
   return Math.floor(m / 1440) + 'd ago'
 }
 
-// ── ABOUT PAGE (from site_settings) ──────────────────────
+// ── ABOUT PAGE ───────────────────────────────────────────
 export async function loadAboutPage() {
   const nameEl = document.getElementById('about-name')
   if (!nameEl) return
@@ -455,7 +460,7 @@ export async function loadAboutPage() {
   }
   if (!data) return
 
-  const name = data.author_name || data.site_name || 'halfsentence'
+  const name   = data.author_name || data.site_name || 'halfsentence'
   const avatar = document.getElementById('about-avatar')
   if (avatar) avatar.textContent = (name[0] || 'h').toUpperCase()
   if (nameEl) nameEl.textContent = name
@@ -482,18 +487,4 @@ export async function loadAboutPage() {
 
   const footerName = document.getElementById('footer-site-name')
   if (footerName && data.site_name) footerName.textContent = data.site_name
-}
-
-function escapeAttr(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-}
-
-// Detect if post body is a full HTML document
-function isFullHtml(body) {
-  if (!body) return false
-  const trimmed = body.trim().toLowerCase()
-  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')
 }
