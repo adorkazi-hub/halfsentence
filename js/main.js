@@ -46,7 +46,9 @@ function avatarColor(name) {
 function isFullHtml(body) {
   if (!body) return false
   const t = body.trim().toLowerCase()
-  return t.startsWith('<!doctype') || t.startsWith('<html')
+  return t.startsWith('<!doctype') || t.startsWith('<html') ||
+    t.startsWith('<meta') || t.startsWith('<link') ||
+    t.includes('<style>') || t.includes('</style>')
 }
 
 window.openHtmlPost = function() {
