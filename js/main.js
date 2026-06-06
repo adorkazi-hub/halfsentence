@@ -209,8 +209,26 @@ export async function loadPost() {
         <span class="post-byline-dot">·</span>
         <span>${post.views || 0} views</span>
       </div>
-      ${post.cover_url ? `<img class="post-cover" src="${escapeHtml(post.cover_url)}" alt="${escapeHtml(post.title)}" loading="lazy"/>` : ''}
-      <div class="post-body">${post.body || ''}</div>
+     ${post.cover_url ? `<img class="post-cover" src="${escapeHtml(post.cover_url)}" alt="${escapeHtml(post.title)}" loading="lazy"/>` : ''}
+${isFullHtml(post.body)
+  ? `<div class="post-html-wrap">
+       <iframe
+         srcdoc="${(post.body || '').replace(/"/g, '&quot;')}"
+         style="width:100%;border:none;min-height:100vh"
+         sandbox="allow-same-origin allow-scripts"
+         id="post-html-frame"
+       ></iframe>
+       <script>
+         // Auto-resize iframe to content height
+         document.getElementById('post-html-frame').onload = function() {
+           try {
+             this.style.height = this.contentDocument.body.scrollHeight + 'px'
+           } catch(e) {}
+         }
+       </script>
+     </div>`
+  : `<div class="post-body">${post.body || ''}</div>`
+}
 
       <div class="reaction-bar">
         <span class="reaction-bar-q">Did this resonate?</span>
@@ -404,6 +422,13 @@ function timeAgo(iso) {
   if (m < 60)   return m + 'm ago'
   if (m < 1440) return Math.floor(m / 60) + 'h ago'
   return Math.floor(m / 1440) + 'd ago'
+}
+
+// Detect if post body is a full HTML document
+function isFullHtml(body) {
+  if (!body) return false
+  const trimmed = body.trim().toLowerCase()
+  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html')
 }
 
 // ── ABOUT PAGE (from site_settings) ──────────────────────

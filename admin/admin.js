@@ -230,7 +230,11 @@ window.editPost = editPost
 
 export async function savePost(status) {
   const title   = getVal('ed-title')
-  const body    = document.getElementById('rte')?.innerHTML || ''
+  const rte = document.getElementById('rte')
+const isHtmlMode = rte?.dataset.htmlMode === 'true'
+const body = isHtmlMode
+  ? rte.dataset.rawHtml
+  : (rte?.innerHTML || '')
   const cat     = getVal('ed-cat')
   const excerpt = getVal('ed-excerpt')
   const slug    = getVal('ed-slug') || slugify(title)
@@ -322,43 +326,64 @@ window.removeCover = () => {
 export function importFile(file) {
   if (!file) return
 
-  // ── HTML file → extract body content, render as-is ──
+  // ── HTML file → store full file, preview in iframe ──
   if (file.name.endsWith('.html') || file.name.endsWith('.htm')) {
     const r = new FileReader()
     r.onload = ev => {
       const raw = ev.target.result
 
-      // Parse the uploaded HTML
+      // Pull title from <title> tag or <h1>
       const parser = new DOMParser()
       const doc = parser.parseFromString(raw, 'text/html')
-
-      // Try to pull a title from <title> or first <h1>
       const htmlTitle = doc.querySelector('title')?.textContent?.trim()
         || doc.querySelector('h1')?.textContent?.trim()
         || file.name.replace(/\.html?$/, '').replace(/[-_]/g, ' ')
-      setVal('ed-title', htmlTitle)
 
-      // Extract just the body content — strips <html>, <head>, <style>, <script> tags
-      // but keeps all inner content (headings, paragraphs, images, etc.)
-      const body = doc.body
+      // Clean the title (remove site name after |)
+      const cleanTitle = htmlTitle.split('|')[0].trim()
+      setVal('ed-title', cleanTitle)
 
-      // Remove any <script> tags from the body for safety
-      body.querySelectorAll('script').forEach(s => s.remove())
+      // Store the full raw HTML in a hidden field
+      // We use a data attribute on the rte element
+      const rte = document.getElementById('rte')
+      rte.dataset.htmlMode = 'true'
+      rte.dataset.rawHtml = raw
 
-      // Remove any <style> tags too — your site's own CSS handles styling
-      body.querySelectorAll('style').forEach(s => s.remove())
-
-      // Put the clean inner HTML into the rich text editor
-      document.getElementById('rte').innerHTML = body.innerHTML.trim()
+      // Show a preview iframe instead of editable content
+      rte.innerHTML = `
+        <div style="background:var(--fog);border-radius:6px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-m)">
+          <span style="font-size:18px">🎨</span>
+          <div>
+            <strong style="color:var(--ink)">HTML file imported with original design</strong><br>
+            This post will display exactly as designed — fonts, colors, layout and all.
+            <span style="color:var(--sage);cursor:pointer;margin-left:8px" onclick="switchToTextMode()">Switch to text editor instead →</span>
+          </div>
+        </div>
+        <iframe
+          id="html-preview-frame"
+          srcdoc="${raw.replace(/"/g, '&quot;').replace(/`/g, '&#96;')}"
+          style="width:100%;height:600px;border:1px solid var(--border);border-radius:6px;background:white"
+          sandbox="allow-same-origin"
+        ></iframe>
+      `
+      rte.contentEditable = 'false'
 
       updateWordCount()
-      toast('✅ HTML file imported! Styles stripped — your site design applies.')
+      toast('✅ HTML imported with full design preserved!')
     }
     r.readAsText(file)
     return
   }
 
-  // ── .docx → placeholder (real parsing needs server-side) ──
+  // ── Reset HTML mode if switching file types ──
+  const rte = document.getElementById('rte')
+  if (rte) {
+    rte.dataset.htmlMode = 'false'
+    rte.dataset.rawHtml = ''
+    rte.contentEditable = 'true'
+  }
+
+  // ── .docx ──
   if (file.name.endsWith('.docx')) {
     document.getElementById('rte').innerHTML =
       `<h2>${file.name.replace('.docx','').replace(/[-_]/g,' ')}</h2>` +
@@ -369,7 +394,7 @@ export function importFile(file) {
     return
   }
 
-  // ── .txt / .md → plain text ──
+  // ── .txt / .md ──
   const r = new FileReader()
   r.onload = ev => {
     const lines = ev.target.result.split('\n')
@@ -379,12 +404,23 @@ export function importFile(file) {
       .replace(/&/g,'&amp;').replace(/</g,'&lt;')
       .replace(/\n\n+/g,'</p><p>')
     document.getElementById('rte').innerHTML = '<p>' + body + '</p>'
+    document.getElementById('rte').contentEditable = 'true'
     toast('✅ File imported!')
     updateWordCount()
   }
   r.readAsText(file)
 }
 window.importFile = importFile
+
+// Switch back to normal text editor
+window.switchToTextMode = () => {
+  const rte = document.getElementById('rte')
+  rte.innerHTML = ''
+  rte.contentEditable = 'true'
+  rte.dataset.htmlMode = 'false'
+  rte.dataset.rawHtml = ''
+  toast('Switched to text editor')
+}
 
 // ── TAGS ─────────────────────────────────────────────────
 export function addTagKey(e) {
