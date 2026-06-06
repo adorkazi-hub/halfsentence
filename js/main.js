@@ -234,7 +234,6 @@ export async function loadPost() {
         <span class="post-byline-dot">·</span>
         <span>${post.views || 0} views</span>
       </div>
-      ${post.cover_url ? `<img class="post-cover" src="${escapeHtml(post.cover_url)}" alt="${escapeHtml(post.title)}" loading="lazy"/>` : ''}
 
       ${htmlPost
 ? `<div class="post-html-wrap" id="html-post-wrap"></div>`
