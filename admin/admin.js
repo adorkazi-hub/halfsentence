@@ -321,27 +321,68 @@ window.removeCover = () => {
 // ── FILE IMPORT ──────────────────────────────────────────
 export function importFile(file) {
   if (!file) return
+
+  // ── HTML file → extract body content, render as-is ──
+  if (file.name.endsWith('.html') || file.name.endsWith('.htm')) {
+    const r = new FileReader()
+    r.onload = ev => {
+      const raw = ev.target.result
+
+      // Parse the uploaded HTML
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(raw, 'text/html')
+
+      // Try to pull a title from <title> or first <h1>
+      const htmlTitle = doc.querySelector('title')?.textContent?.trim()
+        || doc.querySelector('h1')?.textContent?.trim()
+        || file.name.replace(/\.html?$/, '').replace(/[-_]/g, ' ')
+      setVal('ed-title', htmlTitle)
+
+      // Extract just the body content — strips <html>, <head>, <style>, <script> tags
+      // but keeps all inner content (headings, paragraphs, images, etc.)
+      const body = doc.body
+
+      // Remove any <script> tags from the body for safety
+      body.querySelectorAll('script').forEach(s => s.remove())
+
+      // Remove any <style> tags too — your site's own CSS handles styling
+      body.querySelectorAll('style').forEach(s => s.remove())
+
+      // Put the clean inner HTML into the rich text editor
+      document.getElementById('rte').innerHTML = body.innerHTML.trim()
+
+      updateWordCount()
+      toast('✅ HTML file imported! Styles stripped — your site design applies.')
+    }
+    r.readAsText(file)
+    return
+  }
+
+  // ── .docx → placeholder (real parsing needs server-side) ──
   if (file.name.endsWith('.docx')) {
     document.getElementById('rte').innerHTML =
       `<h2>${file.name.replace('.docx','').replace(/[-_]/g,' ')}</h2>` +
       `<p>Your Word document was imported here. Edit freely before publishing.</p>`
     setVal('ed-title', file.name.replace('.docx','').replace(/[-_]/g,' '))
     toast('✅ Word doc imported!')
-  } else {
-    const r = new FileReader()
-    r.onload = ev => {
-      const lines = ev.target.result.split('\n')
-      const title = lines[0].replace(/^#+\s*/,'').trim()
-      if (title) setVal('ed-title', title)
-      const body = lines.slice(1).join('\n').trim()
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-        .replace(/\n\n+/g,'</p><p>')
-      document.getElementById('rte').innerHTML = '<p>' + body + '</p>'
-      toast('✅ File imported!')
-    }
-    r.readAsText(file)
+    updateWordCount()
+    return
   }
-  updateWordCount()
+
+  // ── .txt / .md → plain text ──
+  const r = new FileReader()
+  r.onload = ev => {
+    const lines = ev.target.result.split('\n')
+    const title = lines[0].replace(/^#+\s*/,'').trim()
+    if (title) setVal('ed-title', title)
+    const body = lines.slice(1).join('\n').trim()
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/\n\n+/g,'</p><p>')
+    document.getElementById('rte').innerHTML = '<p>' + body + '</p>'
+    toast('✅ File imported!')
+    updateWordCount()
+  }
+  r.readAsText(file)
 }
 window.importFile = importFile
 

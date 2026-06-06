@@ -201,7 +201,7 @@
           <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
             <span style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-l)">Import</span>
             <button class="rtb-btn" style="width:auto;padding:0 8px;font-size:11px;background:var(--mist);border-radius:5px" onclick="document.getElementById('import-inp').click()">📄 File</button>
-            <input type="file" id="import-inp" accept=".txt,.md,.docx" style="display:none" onchange="importFile(event.target.files[0])"/>
+            <input type="file" id="import-inp" accept=".txt,.md,.docx, .html" style="display:none" onchange="importFile(event.target.files[0])"/>
           </div>
         </div>
         <div class="rte" id="rte" contenteditable="true" oninput="updateWordCount()"></div>
