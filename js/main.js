@@ -62,7 +62,7 @@ window.openHtmlPost = function() {
   if (!html) return
   const blob = new Blob([html], { type: 'text/html' })
   const url  = URL.createObjectURL(blob)
-  window.location.href = url
+  window.open(url, '_blank')
 }
 
 // ── HOME PAGE ────────────────────────────────────────────
@@ -234,10 +234,20 @@ export async function loadPost() {
         <span class="post-byline-dot">·</span>
         <span>${post.views || 0} views</span>
       </div>
+      ${post.cover_url ? `<img class="post-cover" src="${escapeHtml(post.cover_url)}" alt="${escapeHtml(post.title)}" loading="lazy"/>` : ''}
 
       ${htmlPost
-? `<div class="post-html-wrap" id="html-post-wrap"></div>`
-        : `<div classs="post-body">${post.body || ''}</div>`
+        ? `<div class="post-html-wrap" id="html-post-wrap">
+            <div style="text-align:center;padding:60px 20px;background:var(--snow);border-radius:12px;border:1px solid var(--border)">
+              <div style="font-size:48px;margin-bottom:16px">🎨</div>
+              <div style="font-family:'Lora',serif;font-size:22px;font-weight:600;margin-bottom:10px;color:var(--ink)">This post has a custom design</div>
+              <div style="font-size:15px;color:var(--ink-m);margin-bottom:28px;font-family:'Crimson Pro',serif">Click below to read it in full — it opens in a new tab</div>
+              <button onclick="openHtmlPost()" style="background:#5E7856;color:white;border:none;padding:14px 32px;border-radius:99px;font-size:15px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s" onmouseover="this.style.background='#3F5439'" onmouseout="this.style.background='#5E7856'">
+                Open Post →
+              </button>
+            </div>
+          </div>`
+        : `<div class="post-body">${post.body || ''}</div>`
       }
 
       <div class="reaction-bar">
@@ -268,12 +278,8 @@ export async function loadPost() {
     </div>`
 
     // Store HTML body for blob open
-if (htmlPost) {
+    if (htmlPost) {
       window._htmlPostBody = post.body
-      // Open immediately in same tab
-      const blob = new Blob([post.body], { type: 'text/html' })
-      const url  = URL.createObjectURL(blob)
-      window.location.href = url
     }
 
     // Tags
@@ -287,6 +293,7 @@ if (htmlPost) {
 
     // Bump view count in background
     supabase.rpc('increment_views', { post_id: postId }).then(() => {}).catch(() => {})
+
   } catch (err) {
     console.error('loadPost error:', err)
     wrap.innerHTML = '<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Could not load this post. Please try again.</div></div>'
