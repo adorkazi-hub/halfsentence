@@ -201,7 +201,7 @@
           <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
             <span style="font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-l)">Import</span>
             <button class="rtb-btn" style="width:auto;padding:0 8px;font-size:11px;background:var(--mist);border-radius:5px" onclick="document.getElementById('import-inp').click()">📄 File</button>
-            <input type="file" id="import-inp" accept=".txt,.md,.docx, .html, .htm" style="display:none" onchange="importFile(event.target.files[0])"/>
+            <input type="file" id="import-inp" accept=".txt,.md,.docx" style="display:none" onchange="importFile(event.target.files[0])"/>
           </div>
         </div>
         <div class="rte" id="rte" contenteditable="true" oninput="updateWordCount()"></div>
@@ -403,6 +403,26 @@
         <div class="toggle-row"><div><div class="toggle-label">Google Analytics</div><div class="toggle-sub">Tracking enabled</div></div><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
         <div class="meta-field" style="margin-top:12px"><label class="meta-label">Analytics ID</label><input class="meta-in" value="G-XXXXXXXXXX" style="font-family:'JetBrains Mono',monospace;font-size:12px"/></div>
       </div>
+      <div class="settings-card">
+        <div class="settings-title">📖 Currently Reading</div>
+        <div class="meta-field">
+          <label class="meta-label">Book Title</label>
+          <input class="meta-in" id="set-cr-book" placeholder="e.g. Man's Search for Meaning"/>
+        </div>
+        <div class="meta-field">
+          <label class="meta-label">Author</label>
+          <input class="meta-in" id="set-cr-author" placeholder="e.g. Viktor Frankl"/>
+        </div>
+        <div class="meta-field">
+          <label class="meta-label">Favourite Quote from this book</label>
+          <textarea class="meta-in" id="set-cr-quote" rows="3" placeholder="He who has a why to live..."></textarea>
+        </div>
+        <div class="meta-field">
+          <label class="meta-label">Reading Progress (0–100)</label>
+          <input class="meta-in" id="set-cr-progress" type="number" min="0" max="100" value="34" style="font-family:'JetBrains Mono',monospace"/>
+        </div>
+        <button class="topbar-btn tb-primary" onclick="saveCurrentlyReading()" style="margin-top:6px">Save Currently Reading</button>
+      </div>
     </div>
   </div>
 
@@ -538,6 +558,38 @@ window.autoSlug = () => {
 }
 
 // ── Drafts panel ──────────────────────────────────
+// ── Currently Reading ─────────────────────────
+window.saveCurrentlyReading = async () => {
+  const book     = document.getElementById('set-cr-book')?.value.trim()
+  const author   = document.getElementById('set-cr-author')?.value.trim()
+  const quote    = document.getElementById('set-cr-quote')?.value.trim()
+  const progress = parseInt(document.getElementById('set-cr-progress')?.value) || 0
+  if (!book) { toast('⚠️ Enter a book title'); return }
+  const { error } = await supabase.from('site_settings').update({
+    currently_reading_book:     book,
+    currently_reading_author:   author,
+    currently_reading_quote:    quote,
+    currently_reading_progress: progress
+  }).eq('id', 1)
+  if (error) { toast('❌ Save failed: ' + error.message); return }
+  toast('📖 Currently Reading updated!')
+}
+
+async function loadCurrentlyReadingAdmin() {
+  const { data } = await supabase.from('site_settings')
+    .select('currently_reading_book, currently_reading_author, currently_reading_quote, currently_reading_progress')
+    .eq('id', 1).maybeSingle()
+  if (!data) return
+  const b = document.getElementById('set-cr-book')
+  const a = document.getElementById('set-cr-author')
+  const q = document.getElementById('set-cr-quote')
+  const p = document.getElementById('set-cr-progress')
+  if (b) b.value = data.currently_reading_book || ''
+  if (a) a.value = data.currently_reading_author || ''
+  if (q) q.value = data.currently_reading_quote || ''
+  if (p) p.value = data.currently_reading_progress || 34
+}
+
 window.loadDraftsList = async () => {
   const grid = document.getElementById('drafts-grid')
   grid.innerHTML = '<div class="spinner"></div>'
@@ -589,7 +641,8 @@ window.loadScheduledList = async () => {
 }
 
 // ── Activity feed (recent comments + reactions) ────
-async function loadActivity() {
+async function loadActivity()
+loadCurrentlyReadingAdmin() {
   const { data: comments } = await supabase
     .from('comments').select('author,post_id,created_at').order('created_at',{ascending:false}).limit(5)
   const list = document.getElementById('activity-list')
