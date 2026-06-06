@@ -582,3 +582,17 @@ button, input, select, textarea { font-family: inherit; }
   .nav-links { display: none; }
   .readers-banner { flex-direction: column; text-align: center; }
 }
+
+/* ── Full HTML post wrapper ── */
+.post-html-wrap {
+  margin: 0 -32px;
+  border-radius: var(--r);
+  overflow: hidden;
+  border: 1px solid var(--border-l);
+}
+.post-html-wrap iframe {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+  border: none;
+}
