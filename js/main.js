@@ -263,11 +263,13 @@ ${isFullHtml(post.body)
     }
 
     // Tags
+   // Tags
     if (post.tags?.length) {
       const tagsHtml = `<div style="margin-top:32px;display:flex;gap:8px;flex-wrap:wrap">
         ${post.tags.map(t => `<span class="hero-tag">${escapeHtml(t)}</span>`).join('')}
       </div>`
-      wrap.querySelector('.post-body').insertAdjacentHTML('afterend', tagsHtml)
+      const tagsTarget = wrap.querySelector('.post-body') || wrap.querySelector('.post-html-wrap')
+      if (tagsTarget) tagsTarget.insertAdjacentHTML('afterend', tagsHtml)
     }
 
     // Bump view count in background (must not block page render)
