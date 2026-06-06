@@ -641,8 +641,7 @@ window.loadScheduledList = async () => {
 }
 
 // ── Activity feed (recent comments + reactions) ────
-async function loadActivity()
-loadCurrentlyReadingAdmin() {
+async function loadActivity() {
   const { data: comments } = await supabase
     .from('comments').select('author,post_id,created_at').order('created_at',{ascending:false}).limit(5)
   const list = document.getElementById('activity-list')
@@ -664,6 +663,7 @@ function timeAgo(iso) {
 }
 
 loadActivity()
+loadCurrentlyReadingAdmin()
 
 // ── Helper ────────────────────────────────────────
 function setEl(id,t) { const e=document.getElementById(id); if(e) e.textContent=t }
