@@ -243,9 +243,9 @@ ${isFullHtml(post.body)
     </div>`
 
 // Render full HTML post safely via blob URL
-    if (isFullHtml(post.body)) {
-      const wrap = document.getElementById('html-post-wrap')
-      if (wrap) {
+if (isFullHtml(post.body)) {
+      const htmlWrap = document.getElementById('html-post-wrap')
+      if (htmlWrap) {
         const blob = new Blob([post.body], { type: 'text/html' })
         const url  = URL.createObjectURL(blob)
         const iframe = document.createElement('iframe')
@@ -254,25 +254,22 @@ ${isFullHtml(post.body)
         iframe.sandbox = 'allow-same-origin allow-scripts'
         iframe.scrolling = 'no'
 
-        // Try to resize after load
         iframe.onload = function() {
           try {
             const h = this.contentDocument.documentElement.scrollHeight
               || this.contentDocument.body.scrollHeight
             this.style.height = (h + 50) + 'px'
           } catch(e) {
-            // fallback — just make it very tall
             this.style.height = '5000px'
           }
           URL.revokeObjectURL(url)
         }
 
-        // Safety fallback — if onload doesn't fire resize
         setTimeout(() => {
           if (iframe.style.height === '') iframe.style.height = '5000px'
         }, 3000)
 
-        wrap.appendChild(iframe)
+        htmlWrap.appendChild(iframe)
       }
     }
   
